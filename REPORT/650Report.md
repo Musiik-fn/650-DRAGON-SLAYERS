@@ -18,7 +18,10 @@ Table of Contents:
     - [Significance](#significance)
   - [Methodology](#methodology)
   - [Data Description](#data-description)
+    - [Patient Selection Criteria](#patient-selection-criteria)
+    - [Data Aggregation](#data-aggregation)
   - [Analysis and Findings](#analysis-and-findings)
+    - [Exploratory Data Analysis](#exploratory-data-analysis)
   - [Discussion](#discussion)
   - [Recommendations](#recommendations)
   - [Conclusion](#conclusion)
@@ -67,7 +70,32 @@ Validating and potentially enhancing predictive models for sepsis outcomes can a
 
 ## Data Description
 
+### Patient Selection Criteria
+
+The following criteria were used in the selection of the patient records:
+
+- Patient must be diagnosed with sepsis. ICD9 Codes:
+    - 99591, Sepsis
+    - 99592, Severe sepsis
+- Patient must be at least 18 years old
+- Patient must have demographic data
+- Patient must have related lab test results
+- Patient must have no more than 20% of data missing
+
+```SQL
+SELECT * 
+FROM mimiciii.admissions AS A
+INNER JOIN mimiciii.diagnoses_icd AS D ON A.subject_id = D.subject_id
+WHERE D.icd9_code IN ('99591','99592');
+```
+
+### Data Aggregation
+
+Because many of the features is captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean.
+
 ## Analysis and Findings
+
+### Exploratory Data Analysis
 
 ## Discussion
 
