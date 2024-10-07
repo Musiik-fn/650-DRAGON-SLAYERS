@@ -91,7 +91,7 @@ WHERE D.icd9_code IN ('99591','99592');
 
 ### Data Aggregation
 
-Because many of the features is captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean.
+Because many of the features are captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean.
 
 ## Analysis and Findings
 
