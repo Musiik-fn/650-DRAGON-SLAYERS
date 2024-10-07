@@ -19,6 +19,7 @@ Table of Contents:
   - [Methodology](#methodology)
   - [Data Description](#data-description)
     - [Patient Selection Criteria](#patient-selection-criteria)
+    - [Data Extraction](#data-extraction)
     - [Data Aggregation](#data-aggregation)
   - [Analysis and Findings](#analysis-and-findings)
     - [Exploratory Data Analysis](#exploratory-data-analysis)
@@ -87,6 +88,19 @@ SELECT *
 FROM mimiciii.admissions AS A
 INNER JOIN mimiciii.diagnoses_icd AS D ON A.subject_id = D.subject_id
 WHERE D.icd9_code IN ('99591','99592');
+```
+
+### Data Extraction
+
+We started with extracting all of the data related to patients diagnosed with sepsis:
+
+- Chart Events Query:
+
+```SQL
+SELECT *
+FROM `physionet-data.mimiciii_clinical.chartevents` AS C
+INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID = C.SUBJECT_ID
+WHERE D.ICD9_CODE IN ('99591', '99592')
 ```
 
 ### Data Aggregation
