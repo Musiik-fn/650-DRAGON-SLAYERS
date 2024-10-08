@@ -103,6 +103,17 @@ INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID
 WHERE D.ICD9_CODE IN ('99591', '99592')
 ```
 
+- Heart Rate Average Query:
+```SQL
+SELECT C.SUBJECT_ID,ITEM.LABEL, AVG(C.VALUENUM) AS HEARTRATE
+FROM `physionet-data.mimiciii_clinical.chartevents` AS C
+INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID = C.SUBJECT_ID
+JOIN `physionet-data.mimiciii_clinical.d_items` AS ITEM ON ITEM.ITEMID = C.ITEMID
+WHERE D.ICD9_CODE IN ('99591', '99592') AND (C.ITEMID  IN (211, 220045))
+GROUP BY C.SUBJECT_ID, ITEM.LABEL
+ORDER BY C.SUBJECT_ID ASC
+```
+
 ### Data Aggregation
 
 Because many of the features are captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean.
