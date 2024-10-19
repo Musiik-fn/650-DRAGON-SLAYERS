@@ -19,6 +19,8 @@ Table of Contents:
   - [Methodology](#methodology)
   - [Data Description](#data-description)
     - [Patient Selection Criteria](#patient-selection-criteria)
+      - [Queries](#queries)
+    - [Data Extraction](#data-extraction)
     - [Data Aggregation](#data-aggregation)
   - [Analysis and Findings](#analysis-and-findings)
     - [Exploratory Data Analysis](#exploratory-data-analysis)
@@ -82,11 +84,54 @@ The following criteria were used in the selection of the patient records:
 - Patient must have related lab test results
 - Patient must have no more than 20% of data missing
 
+#### Queries
+- Basic Patient Query:
 ```SQL
-SELECT * 
-FROM mimiciii.admissions AS A
-INNER JOIN mimiciii.diagnoses_icd AS D ON A.subject_id = D.subject_id
-WHERE D.icd9_code IN ('99591','99592');
+SELECT DISTINCT
+    p.SUBJECT_ID,
+    p.GENDER,
+    p.DOB,
+    p.DOD,
+    p.EXPIRE_FLAG,
+    a.HADM_ID,
+    a.ADMITTIME,
+    a.DISCHTIME,
+    a.ADMISSION_TYPE,
+    DATE_DIFF(DATE(a.ADMITTIME), DATE(p.DOB), YEAR) AS AGE_AT_ADMISSION
+FROM
+    physionet-data.mimiciii_clinical.patients p
+JOIN
+    physionet-data.mimiciii_clinical.diagnoses_icd d
+    ON p.SUBJECT_ID = d.SUBJECT_ID
+JOIN
+    physionet-data.mimiciii_clinical.admissions a
+    ON d.HADM_ID = a.HADM_ID
+WHERE
+    d.ICD9_CODE IN ('99591', '99592');
+```
+
+### Data Extraction
+
+We started with extracting all of the data related to patients diagnosed with sepsis:
+
+- Chart Events Query:
+
+```SQL
+SELECT *
+FROM `physionet-data.mimiciii_clinical.chartevents` AS C
+INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID = C.SUBJECT_ID
+WHERE D.ICD9_CODE IN ('99591', '99592')
+```
+
+- Heart Rate Average Query:
+```SQL
+SELECT C.SUBJECT_ID,ITEM.LABEL, AVG(C.VALUENUM) AS HEARTRATE
+FROM `physionet-data.mimiciii_clinical.chartevents` AS C
+INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID = C.SUBJECT_ID
+JOIN `physionet-data.mimiciii_clinical.d_items` AS ITEM ON ITEM.ITEMID = C.ITEMID
+WHERE D.ICD9_CODE IN ('99591', '99592') AND (C.ITEMID  IN (211, 220045))
+GROUP BY C.SUBJECT_ID, ITEM.LABEL
+ORDER BY C.SUBJECT_ID ASC
 ```
 
 ### Data Aggregation
@@ -106,4 +151,4 @@ Because many of the features are captured periodically, such as vital signs and 
 ## Appendices
 
 ## References
-
+- https://cloud.google.com/bigquery/docs/python-libraries
