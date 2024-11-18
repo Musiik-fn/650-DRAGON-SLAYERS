@@ -112,47 +112,45 @@ WHERE
 
 #### Feature List
 
+The features were divided into the following categories: **baseline variables, vital signs, and laboratory parameters**. The variables were chosen directly from the paper. For the variables that were captured periodically, such as heart rate, they were aggregated and incorporated into the model using **min**, **mean**, and **maximum values**. 
 
-| Feature Type        | Feature                           | Source Table | Item ID                                  |
-|---------------------|-----------------------------------|--------------|------------------------------------------|
-| Baseline Variables  | Age (year)                        | PATIENTS     | Given                                    |
-| Baseline Variables  | Sex                               | PATIENTS     | Given                                    |
-| Baseline Variables  | Ethnicity                         | PATIENTS     | Given                                    |
-| Baseline Variables  | Weight (kg)                       | CHARTEVENTS  | 226531, 763, 224639, 226512               |
-| Baseline Variables  | Height (cm)                       | CHARTEVENTS  | 226707, 226730, 1394                      |
-| Baseline Variables  | Length of stay in hospital (days) | ADMISSION    | Calculated                                |
-| Baseline Variables  | Length of stay in ICU (days)       | ICUSTAYS     | Given                                     |
 
-| Feature Type | Feature                        | Source Table | Item ID                                     |
-|--------------|--------------------------------|--------------|---------------------------------------------|
-| Vital Signs  | Heartrate_min (times/min)       | CHARTEVENTS  | 211, 220045                                 |
-| Vital Signs  | Heartrate_mean (times/min)      | CHARTEVENTS  | 211, 220045                                 |
-| Vital Signs  | Sysbp_min (mmHg)                | CHARTEVENTS  | 51, 422, 227243, 224167, 220179, 225309, 6701, 220050, 455 |
-| Vital Signs  | Diasbp_mean (mmHg)              | CHARTEVENTS  | 224643, 225310, 220180, 8555, 220051, 8368, 8441, 8440 |
-| Vital Signs  | Meanbp_min (mmHg)               | CHARTEVENTS  | 456, 220181, 224, 225312, 220052, 52, 6702, 224322 |
-| Vital Signs  | Resprate_mean (times/min)       | CHARTEVENTS  | 224422, 618, 220210, 224689, 614, 651, 224690, 615 |
-| Vital Signs  | Tempc_min (°C)                  | CHARTEVENTS  | 223761, 677, 676, 679, 678, 223762        |
-| Vital Signs  | Tempc_max (°C)                  | CHARTEVENTS  | 223761, 677, 676, 679, 678, 223762        |
-| Vital Signs  | Spo2_mean (%)                   | CHARTEVENTS  | 646, 50817, 834, 220277, 220227            |
 
-| Feature Type          | Feature                  | Source Table | Item ID         |
-|-----------------------|--------------------------|--------------|-----------------|
-| Laboratory Parameters | Aniongap_max (mmHg)      | LABEVENTS    | 50868           |
-| Laboratory Parameters | Aniongap_min (mmHg)      | LABEVENTS    | 50868           |
-| Laboratory Parameters | Creatinine_min (ng/dL)   | LABEVENTS    | 50912           |
-| Laboratory Parameters | Chloride_min (mmol/L)    | LABEVENTS    | 50806, 50902     |
-| Laboratory Parameters | Hemoglobin_min (g/dL)    | LABEVENTS    | 51222, 50811     |
-| Laboratory Parameters | Hemoglobin_max (g/dL)    | LABEVENTS    | 51222, 50811     |
-| Laboratory Parameters | Lactate_min (mmol/L)     | LABEVENTS    | 50813           |
-| Laboratory Parameters | Platelet_min (10⁹/L)     | LABEVENTS    | 51265           |
-| Laboratory Parameters | Potassium_min (mmol/L)   | LABEVENTS    | 50971, 50822     |
-| Laboratory Parameters | Sodium_min (mmol/L)      | LABEVENTS    | 50983, 50824     |
-| Laboratory Parameters | Sodium_max (mmol/L)      | LABEVENTS    | 50983, 50824     |
-| Laboratory Parameters | Bun_min (mmol/L)         | LABEVENTS    | 51006           |
-| Laboratory Parameters | Bun_max (mmol/L)         | LABEVENTS    | 51006           |
-| Laboratory Parameters | Wbc_min (10⁹/L)           | LABEVENTS    | 51516           |
-| Laboratory Parameters | Wbc_max (10⁹/L)           | LABEVENTS    | 51516           |
-| Laboratory Parameters | Inr_max                  | LABEVENTS    | 51237           |
+| Feature Type          | Feature                          | Source Table | Item ID                                                         |
+|-----------------------|----------------------------------|--------------|-----------------------------------------------------------------|
+| Baseline Variables    | Age (year)                       | PATIENTS     | Given                                                           |
+| Baseline Variables    | Sex                              | PATIENTS     | Given                                                           |
+| Baseline Variables    | Ethnicity                        | PATIENTS     | Given                                                           |
+| Baseline Variables    | Weight (kg)                      | CHARTEVENTS  | 226531, 763, 224639, 226512                                      |
+| Baseline Variables    | Height (cm)                      | CHARTEVENTS  | 226707, 226730, 1394                                             |
+| Baseline Variables    | Length of stay in hospital (days)| ADMISSION    | Calculated                                                      |
+| Baseline Variables    | Length of stay in ICU (days)      | ICUSTAYS     | Given                                                           |
+| Vital Signs           | Heartrate_min (times/min)         | CHARTEVENTS  | 211, 220045                                                     |
+| Vital Signs           | Heartrate_mean (times/min)        | CHARTEVENTS  | 211, 220045                                                     |
+| Vital Signs           | Sysbp_min (mmHg)                  | CHARTEVENTS  | 51, 422, 227243, 224167, 220179, 225309, 6701, 220050, 455      |
+| Vital Signs           | Diasbp_mean (mmHg)                | CHARTEVENTS  | 224643, 225310, 220180, 8555, 220051, 8368, 8441, 8440          |
+| Vital Signs           | Meanbp_min (mmHg)                 | CHARTEVENTS  | 456, 220181, 224, 225312, 220052, 52, 6702, 224322             |
+| Vital Signs           | Resprate_mean (times/min)         | CHARTEVENTS  | 224422, 618, 220210, 224689, 614, 651, 224690, 615             |
+| Vital Signs           | Tempc_min (°C)                    | CHARTEVENTS  | 223761, 677, 676, 679, 678, 223762                              |
+| Vital Signs           | Tempc_max (°C)                    | CHARTEVENTS  | 223761, 677, 676, 679, 678, 223762                              |
+| Vital Signs           | Spo2_mean (%)                     | CHARTEVENTS  | 646, 50817, 834, 220277, 220227                                  |
+| Laboratory Parameters | Aniongap_max (mmHg)               | LABEVENTS    | 50868                                                           |
+| Laboratory Parameters | Aniongap_min (mmHg)               | LABEVENTS    | 50868                                                           |
+| Laboratory Parameters | Creatinine_min (ng/dL)            | LABEVENTS    | 50912                                                           |
+| Laboratory Parameters | Chloride_min (mmol/L)             | LABEVENTS    | 50806, 50902                                                     |
+| Laboratory Parameters | Hemoglobin_min (g/dL)             | LABEVENTS    | 51222, 50811                                                     |
+| Laboratory Parameters | Hemoglobin_max (g/dL)             | LABEVENTS    | 51222, 50811                                                     |
+| Laboratory Parameters | Lactate_min (mmol/L)              | LABEVENTS    | 50813                                                           |
+| Laboratory Parameters | Platelet_min (10⁹/L)              | LABEVENTS    | 51265                                                           |
+| Laboratory Parameters | Potassium_min (mmol/L)            | LABEVENTS    | 50971, 50822                                                     |
+| Laboratory Parameters | Sodium_min (mmol/L)               | LABEVENTS    | 50983, 50824                                                     |
+| Laboratory Parameters | Sodium_max (mmol/L)               | LABEVENTS    | 50983, 50824                                                     |
+| Laboratory Parameters | Bun_min (mmol/L)                  | LABEVENTS    | 51006                                                           |
+| Laboratory Parameters | Bun_max (mmol/L)                  | LABEVENTS    | 51006                                                           |
+| Laboratory Parameters | Wbc_min (10⁹/L)                    | LABEVENTS    | 51516                                                           |
+| Laboratory Parameters | Wbc_max (10⁹/L)                    | LABEVENTS    | 51516                                                           |
+| Laboratory Parameters | Inr_max                           | LABEVENTS    | 51237                                                           |
+
 
 
 
