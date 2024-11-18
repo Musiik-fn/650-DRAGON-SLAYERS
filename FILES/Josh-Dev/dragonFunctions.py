@@ -17,7 +17,7 @@ def mean_confidence_interval(data, confidence=0.95):
     h = se * stats.t.ppf((1 + confidence) / 2., n-1)
     return mean, (mean - h, mean + h)
 
-def get_stats(df, group_col='HOSPITAL_EXPIRE_FLAG', confidence=0.95):
+def get_stats(df, group_col='MORTALITY', confidence=0.95):
     """
     Analyze numerical features in the dataframe, aggregating by the specified group column.
     
@@ -221,3 +221,5 @@ def compare_summary_stats(summary_before, summary_after, capped_summary):
     ]]
     
     return comparison_table
+
+    
