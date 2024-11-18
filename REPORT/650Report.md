@@ -115,7 +115,6 @@ WHERE
 The features were divided into the following categories: **baseline variables, vital signs, and laboratory parameters**. The variables were chosen directly from the paper. For the variables that were captured periodically, such as heart rate, they were aggregated and incorporated into the model using **min**, **mean**, and **maximum values**. 
 
 
-
 | Feature Type          | Feature                          | Source Table | Item ID                                                         |
 |-----------------------|----------------------------------|--------------|-----------------------------------------------------------------|
 | Baseline Variables    | Age (year)                       | PATIENTS     | Given                                                           |
@@ -151,35 +150,23 @@ The features were divided into the following categories: **baseline variables, v
 | Laboratory Parameters | Wbc_max (10⁹/L)                    | LABEVENTS    | 51516                                                           |
 | Laboratory Parameters | Inr_max                           | LABEVENTS    | 51237                                                           |
 
+### Data Aggregation
 
-
-
-
-We started with extracting all of the data related to patients diagnosed with sepsis:
-
-- Chart Events Query:
-
-```SQL
-SELECT *
-FROM `physionet-data.mimiciii_clinical.chartevents` AS C
-INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID = C.SUBJECT_ID
-WHERE D.ICD9_CODE IN ('99591', '99592')
-```
+Because many of the features are captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean.
 
 - Heart Rate Average Query:
 ```SQL
 SELECT C.SUBJECT_ID,ITEM.LABEL, AVG(C.VALUENUM) AS HEARTRATE
 FROM `physionet-data.mimiciii_clinical.chartevents` AS C
+
 INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID = C.SUBJECT_ID
 JOIN `physionet-data.mimiciii_clinical.d_items` AS ITEM ON ITEM.ITEMID = C.ITEMID
 WHERE D.ICD9_CODE IN ('99591', '99592') AND (C.ITEMID  IN (211, 220045))
+
 GROUP BY C.SUBJECT_ID, ITEM.LABEL
 ORDER BY C.SUBJECT_ID ASC
 ```
-
-### Data Aggregation
-
-Because many of the features are captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean.
+A query was written to extract each feature listed in the feature table, and then the results were merged on the sepsis patient table on the `SUBJECT_ID`. All SQL statements used can be found in the file `Data_Extraction.sql`.
 
 ## Analysis and Findings
 
