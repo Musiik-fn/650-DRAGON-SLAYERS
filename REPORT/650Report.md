@@ -1,6 +1,6 @@
 # 650 Project - Predicting 30‑days mortality for MIMIC‑III patients with sepsis‑3
 
-**Authors**: Joshua Cabal, Viridiana Radillo, Ida Karima
+**Authors**: Joshua Cabal,  Ida Karima, Viridiana Radillo,
 
 California State University, Northridge
 
@@ -18,12 +18,15 @@ Table of Contents:
     - [Objectives](#objectives)
     - [Significance](#significance)
   - [Methodology](#methodology)
-  - [Data Description](#data-description)
+    - [XGBoost](#xgboost)
+  - [Data Extraction](#data-extraction)
     - [Patient Selection Criteria](#patient-selection-criteria)
-      - [Queries](#queries)
-    - [Data Extraction](#data-extraction)
-      - [Feature List](#feature-list)
+    - [Feature Selection](#feature-selection)
     - [Data Aggregation](#data-aggregation)
+  - [Data Preprocessing](#data-preprocessing)
+    - [Categorical Feature Encoding](#categorical-feature-encoding)
+    - [Handling `NULL` Values](#handling-null-values)
+    - [Handling Outliers](#handling-outliers)
   - [Analysis and Findings](#analysis-and-findings)
     - [Exploratory Data Analysis](#exploratory-data-analysis)
   - [Discussion](#discussion)
@@ -68,7 +71,12 @@ Validating and potentially enhancing predictive models for sepsis outcomes can a
 
 ## Methodology
 
-## Data Description
+### XGBoost
+
+From the [XGBoost documentation](https://xgboost.readthedocs.io/en/stable/),  XGBoost is an optimized distributed gradient boosting library designed to be highly efficient, flexible and portable. It implements machine learning algorithms under the [Gradient Boosting](https://en.wikipedia.org/wiki/Gradient_boosting) framework. XGBoost provides a parallel tree boosting (also known as GBDT, GBM) that solve many data science problems in a fast and accurate way. The same code runs on major distributed environment (Hadoop, SGE, MPI) and can solve problems beyond billions of examples.
+
+
+## Data Extraction
 
 ### Patient Selection Criteria
 
@@ -82,7 +90,6 @@ The following criteria were used in the selection of the patient records:
 - Patient must have related lab test results
 - Patient must have no more than 20% of data missing
 
-#### Queries
 - Basic Patient Query:
 ```SQL
 SELECT DISTINCT
@@ -108,9 +115,7 @@ WHERE
     d.ICD9_CODE IN ('99591', '99592');
 ```
 
-### Data Extraction
-
-#### Feature List
+### Feature Selection
 
 The features were divided into the following categories: **baseline variables, vital signs, and laboratory parameters**. The variables were chosen directly from the paper. For the variables that were captured periodically, such as heart rate, they were aggregated and incorporated into the model using **min**, **mean**, and **maximum values**. 
 
@@ -168,6 +173,80 @@ ORDER BY C.SUBJECT_ID ASC
 ```
 A query was written to extract each feature listed in the feature table, and then the results were merged on the sepsis patient table on the `SUBJECT_ID`. All SQL statements used can be found in the file `Data_Extraction.sql`.
 
+## Data Preprocessing
+
+
+### Categorical Feature Encoding
+
+The following categorical features were used in the model: Sex, Ethnicity, and Admission Type. All features were encoded into binary variables. Originally, 36 unique ethnicities were reported, and because of this high cardinality, the following grouping was used: 
+
+| Ethnicity Conditions                                                                 | Consolidation                         |
+|------------------------------------------------------------------------------------|--------------------------------------------|
+| Contains `'WHITE'`                                                                  | WHITE                                      |
+| Contains `'BLACK'` or `'AFRICAN AMERICAN'`                                         | BLACK OR AFRICAN AMERICAN                  |
+| Contains `'ASIAN'`                                                                  | ASIAN                                      |
+| Contains `'HISPANIC'` or `'LATINO'`                                                 | HISPANIC OR LATINO                         |
+| Contains `'AMERICAN INDIAN'` or `'ALASKA NATIVE'`                                   | AMERICAN INDIAN OR ALASKA NATIVE           |
+| Contains `'NATIVE HAWAIIAN'` or `'PACIFIC ISLANDER'`                                | NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER   |
+| Contains `'MIDDLE EASTERN'`                                                         | MIDDLE EASTERN                             |
+| Contains `'UNKNOWN'`, `'NOT SPECIFIED'`, `'DECLINED TO ANSWER'`, or `'UNABLE TO OBTAIN'` | UNKNOWN/NOT SPECIFIED/DECLINED             |
+| Does not meet any of the above conditions                                         | OTHER                                      |
+
+
+
+### Handling `NULL` Values
+After extracting all data and merging onto one DataFrame, a report of the `null` values was ran:
+
+| FEATURE                                                    | NULL COUNT | NULL PERCENTAGE |
+|------------------------------------------------------------|------------|------------------|
+| AGE_AT_ADMISSION                                           | 0          | 0.000            |
+| LOS                                                        | 0          | 0.000            |
+| LOS_ICU_MEAN                                               | 1          | 0.022            |
+| WEIGHT_MEAN                                                | 232        | 5.093            |
+| HEARTRATE_MEAN                                             | 5          | 0.110            |
+| SBP_MEAN                                                   | 4          | 0.088            |
+| DBP_MEAN                                                   | 4          | 0.088            |
+| MAP_MEAN                                                   | 4          | 0.088            |
+| RR_MEAN                                                    | 4          | 0.088            |
+| TEMP_MIN_C                                                 | 12         | 0.263            |
+| TEMP_MAX_C                                                 | 12         | 0.263            |
+| OXYGEN_SAT_MEAN                                            | 8          | 0.176            |
+| DIABETES                                                   | 0          | 0.000            |
+| ANIONGAP_MAX_VAL                                           | 4          | 0.088            |
+| BUN_MAX_VAL                                                | 2          | 0.044            |
+| HEMOGLOBIN_MAX_VAL                                         | 2          | 0.044            |
+| INR_MAX_VAL                                                | 35         | 0.768            |
+| SODIUM_MAX_VAL                                             | 3          | 0.066            |
+| ANIONGAP_MIN_VAL                                           | 4          | 0.088            |
+| BUN_MIN_VAL                                                | 2          | 0.044            |
+| CHLORIDE_MIN_VAL                                           | 3          | 0.066            |
+| CREATININE_MIN_VAL                                         | 2          | 0.044            |
+| HEMOGLOBIN_MIN_VAL                                         | 2          | 0.044            |
+| INR_MIN_VAL                                                | 35         | 0.768            |
+| LACTATE_MIN_VAL                                            | 89         | 1.954            |
+| PLATELET_MIN_VAL                                           | 2          | 0.044            |
+| POTASSIUM_MIN_VAL                                          | 2          | 0.044            |
+| SODIUM_MIN_VAL                                             | 3          | 0.066            |
+| MORTALITY                                                  | 0          | 0.000            |
+| GENDER_M                                                   | 0          | 0.000            |
+| ADMISSION_TYPE_EMERGENCY                                    | 0          | 0.000            |
+| ADMISSION_TYPE_URGENT                                       | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_ASIAN                                | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_BLACK OR AFRICAN AMERICAN            | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_HISPANIC OR LATINO                    | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_MIDDLE EASTERN                        | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_OTHER                                  | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_UNKNOWN/NOT SPECIFIED/DECLINED         | 0          | 0.000            |
+| ETHNICITY_CONSOLIDATED_WHITE                                   | 0          | 0.000            |
+
+Mean value imputation was used to fill all `null` values. 
+
+### Handling Outliers
+
+
+
+
 ## Analysis and Findings
 
 ### Exploratory Data Analysis
@@ -182,3 +261,4 @@ A query was written to extract each feature listed in the feature table, and the
 
 ## References
 - https://cloud.google.com/bigquery/docs/python-libraries
+- https://xgboost.readthedocs.io/en/stable/
