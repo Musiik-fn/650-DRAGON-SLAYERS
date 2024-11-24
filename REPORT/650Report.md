@@ -25,15 +25,16 @@ Table of Contents:
     - [Feature Selection](#feature-selection)
     - [Data Aggregation](#data-aggregation)
   - [Data Preprocessing](#data-preprocessing)
+    - [Defining Outcome Variable: 30-Day Mortality](#defining-outcome-variable-30-day-mortality)
     - [Categorical Feature Encoding](#categorical-feature-encoding)
     - [Handling `NULL` Values](#handling-null-values)
     - [Handling Outliers](#handling-outliers)
-  - [Analysis and Findings](#analysis-and-findings)
-    - [Exploratory Data Analysis](#exploratory-data-analysis)
+  - [Exploratory Data Analysis](#exploratory-data-analysis)
+    - [Patient Cohort](#patient-cohort)
+    - [Feature Statistics](#feature-statistics)
+  - [Model Development and Evaluation](#model-development-and-evaluation)
   - [Discussion](#discussion)
-  - [Recommendations](#recommendations)
   - [Conclusion](#conclusion)
-  - [Appendices](#appendices)
   - [References](#references)
 
 ---
@@ -85,7 +86,13 @@ From the [XGBoost documentation](https://xgboost.readthedocs.io/en/stable/),  XG
 
 ## Data Extraction
 
-We first extracted the baseline admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. All SQL statements used can be found in the file `Data_Extraction.sql`.
+Below is an image of the process which was used to prepare the data for model development. 
+
+![Patient Cohort Image](Report%20Figures/Data%20Preprocessing%20Figure(1).png)
+
+We first extracted the given admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. After this, the data transformation steps included handling inconsistencies, missing values, outliers, and categorical feature encoding. Finally, the 30 day mortality column is defined.
+
+All SQL statements used can be found in the file `Data_Extraction.sql`.
 
 ### Patient Selection Criteria and Query
 
@@ -183,6 +190,22 @@ ORDER BY C.SUBJECT_ID ASC
 A query was written to extract each feature listed in the feature table, and then the results were merged on the sepsis patient table on the `SUBJECT_ID`. 
 
 ## Data Preprocessing
+
+### Defining Outcome Variable: 30-Day Mortality
+The sepsis patients were divided into two groups based on their 30 day mortality:
+1. `MORTALITY = 0`: Died within 30 days
+2. `MORTALITY = 1`: Survived within 30 days
+
+```python
+patient_df['DOD'] = pd.to_datetime(patient_df['DOD'])
+patient_df['ADMITTIME'] = pd.to_datetime(patient_df['ADMITTIME'])
+
+# define 30-days mortality column 
+patient_df['DIFF_DAYS'] = (patient_df['DOD'] - patient_df['ADMITTIME']).dt.days
+patient_df['MORTALITY'] = patient_df['DIFF_DAYS'].apply(lambda x: 0 if x>30 else 1)
+```
+
+The statistics related to this will be provided in the exploratory data analysis section of this paper. 
 
 
 ### Categorical Feature Encoding
@@ -308,17 +331,62 @@ def preprocess_outliers(df, threshold=3):
 | SODIUM_MIN_VAL      | 131.402861  | 131.5164675| 0.08645664798      | 208          | 63           | 271          | 5.24            |
 
 
-## Analysis and Findings
+## Exploratory Data Analysis
 
-### Exploratory Data Analysis
+This section includes the exploratory data analysis
+
+### Patient Cohort
+
+![Patient Cohort Image](Report%20Figures/Patient%20Selection%20Figure.png)
+
+### Feature Statistics
+
+Below is a table of the numerical baseline characteristics, vital signs, laboratory parameters and statistic results of mimic-III patients with sepsis. The table highlights several significant differences in baseline characteristics, vital signs, and laboratory parameters between sepsis patients who survived and those who did not within 30 days. Key predictors of mortality include renal and metabolic dysfunction indicators (e.g., elevated BUN, lactate, and anion gap), hemodynamic instability (e.g., lower SBP and MAP), respiratory distress (e.g., lower oxygen saturation), coagulation abnormalities (e.g., elevated INR), older age, and shorter hospital stays.  
+
+| Feature                             | Mean (`MORTALITY=0`) [95% CI]                      | Mean (`MORTALITY=1`) [95% CI]                      | p-value            |
+|-------------------------------------|----------------------------------------|----------------------------------------|--------------------|
+| BUN_MIN_VAL                         | 11.8391 (11.5640, 12.1142)             | 20.5947 (19.9426, 21.2469)             | 2.57E-115          |
+| LACTATE_MAX_VAL                     | 3.9765 (3.8948, 4.0583)                | 6.0467 (5.8692, 6.2242)                | 5.23E-88           |
+| SBP_MEAN                            | 116.4027 (115.9590, 116.8464)          | 107.2450 (106.4869, 108.0031)          | 1.43E-86           |
+| LACTATE_MIN_VAL                     | 1.0718 (1.0557, 1.0879)                | 1.5583 (1.5135, 1.6032)                | 1.85E-81           |
+| PLATELET_MAX_VAL                    | 441.4380 (434.7949, 448.0812)          | 330.5968 (321.2474, 339.9461)          | 4.63E-76           |
+| DBP_MEAN                            | 60.3454 (60.0613, 60.6295)             | 55.5000 (55.0728, 55.9272)             | 1.16E-72           |
+| MAP_MEAN                            | 76.7521 (76.4814, 77.0228)             | 72.0117 (71.5865, 72.4370)             | 5.97E-72           |
+| ANIONGAP_MIN_VAL                    | 8.7372 (8.6631, 8.8112)                 | 10.4310 (10.2674, 10.5945)             | 2.59E-71           |
+| INR_MIN_VAL                         | 1.0987 (1.0928, 1.1046)                 | 1.2277 (1.2137, 1.2416)                 | 3.47E-59           |
+| ANIONGAP_MAX_VAL                    | 20.4475 (20.2887, 20.6063)             | 23.0914 (22.8143, 23.3685)             | 1.27E-56           |
+| OXYGEN_SAT_MEAN                     | 97.0256 (96.9806, 97.0706)             | 95.9278 (95.8015, 96.0541)             | 1.07E-54           |
+| BUN_MAX_VAL                         | 55.8206 (54.6891, 56.9521)             | 71.1694 (69.4175, 72.9213)             | 1.08E-45           |
+| CREATININE_MIN_VAL                  | 0.8126 (0.7950, 0.8302)                 | 1.0903 (1.0554, 1.1252)                 | 1.63E-42           |
+| POTASSIUM_MIN_VAL                   | 3.1267 (3.1137, 3.1396)                 | 3.2987 (3.2745, 3.3229)                 | 1.11E-33           |
+| PLATELET_MIN_VAL                    | 131.1287 (128.6262, 133.6312)           | 106.7732 (102.7303, 110.8161)           | 2.32E-23           |
+| TEMP_MEAN_C                         | 36.8956 (36.8784, 36.9128)              | 36.6986 (36.6639, 36.7332)              | 4.74E-23           |
+| HEMOGLOBIN_MAX_VAL                  | 12.9470 (12.8892, 13.0047)              | 12.4502 (12.3625, 12.5379)              | 3.06E-20           |
+| HEARTRATE_MEAN                      | 87.7993 (87.4007, 88.1978)              | 91.4300 (90.7714, 92.0887)              | 4.34E-20           |
+| AGE_AT_ADMISSION                    | 66.3109 (65.7908, 66.8310)              | 69.6846 (68.9492, 70.4200)              | 2.58E-13           |
+| RR_MEAN                             | 20.1052 (19.9986, 20.2117)              | 20.7528 (20.5759, 20.9297)              | 8.85E-10           |
+| CREATININE_MAX_VAL                  | 3.0329 (2.9365, 3.1292)                  | 3.5043 (3.3746, 3.6340)                  | 1.14E-08           |
+| INR_MAX_VAL                         | 2.9458 (2.8593, 3.0322)                  | 3.3974 (3.2649, 3.5299)                  | 2.35E-08           |
+| LOS_ICU_MEAN                        | 5.7327 (5.5569, 5.9084)                  | 6.7263 (6.4204, 7.0322)                  | 3.63E-08           |
+| CHLORIDE_MAX_VAL                    | 113.0423 (112.8532, 113.2313)            | 112.0484 (111.7189, 112.3778)            | 3.07E-07           |
+| LOS                                 | 14.0054 (13.6193, 14.3915)               | 12.2591 (11.6275, 12.8906)               | 3.88E-06           |
+| TEMP_MIN_C                          | 34.6777 (34.5590, 34.7963)               | 34.1539 (33.9566, 34.3511)               | 8.39E-06           |
+| SODIUM_MAX_VAL                      | 145.8018 (145.6469, 145.9568)            | 145.1029 (144.8254, 145.3804)            | 1.67E-05           |
+| POTASSIUM_MAX_VAL                   | 5.5335 (5.4959, 5.5711)                  | 5.6390 (5.5861, 5.6920)                  | 0.001451080247     |
+| DIABETES                            | 0.3809 (0.3650, 0.3968)                  | 0.3561 (0.3326, 0.3796)                  | 0.08707751955      |
+| HEMOGLOBIN_MIN_VAL                  | 7.9936 (7.9412, 8.0459)                  | 8.0622 (7.9807, 8.1437)                  | 0.1646019274       |
+| SODIUM_MIN_VAL                      | 131.5808 (131.4097, 131.7518)            | 131.3721 (131.0853, 131.6589)            | 0.2204434812       |
+| TEMP_MAX_C                          | 39.6228 (39.3885, 39.8571)               | 39.3669 (39.0131, 39.7207)               | 0.2370434699       |
+| WEIGHT_MEAN                         | 81.9442 (81.2536, 82.6348)               | 81.9198 (80.8720, 82.9676)               | 0.9695997544       |
+| CHLORIDE_MIN_VAL                    | 96.1065 (95.9060, 96.3070)               | 96.1136 (95.7766, 96.4507)               | 0.9715199933       |
+
+
+## Model Development and Evaluation
+
 
 ## Discussion
 
-## Recommendations
-
 ## Conclusion
-
-## Appendices
 
 ## References
 - Hou, N., Li, M., He, L. et al. Predicting 30-days mortality for MIMIC-III patients with sepsis-3: a machine learning approach using XGboost. J Transl Med 18, 462 (2020). https://doi.org/10.1186/s12967-020-02620-5
