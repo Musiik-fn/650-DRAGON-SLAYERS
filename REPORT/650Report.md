@@ -39,7 +39,7 @@ Table of Contents:
 
 ## Executive Sumamry
 
-Sepsis is a critical global health issue with high mortality rates, particularly among ICU patients. Early prediction of sepsis outcomes is essential for improving patient care and survival rates. This report replicates the study by Hou et al. (2020), aiming to **develop a predictive model for 30-day mortality in sepsis-3 patients** using the MIMIC-III database.
+Sepsis is a critical global health issue with high mortality rates, particularly among ICU patients. Early prediction of sepsis outcomes is essential for improving patient care and survival rates. This report replicates the study by [Hou et al. (2020)](https://doi.org/10.1186/s12967-020-02620-5), aiming to **develop a predictive model for 30-day mortality in sepsis-3 patients** using the MIMIC-III database.
 
 Using machine learning techniques, specifically the XGBoost algorithm, we constructed a predictive model and compared its performance with traditional models such as random forests and logistic regression. Our findings indicate that the XGBoost model outperforms the conventional models, demonstrating higher accuracy and better predictive capabilities.
 
@@ -49,7 +49,7 @@ This study reinforces the potential of machine learning approaches in clinical s
 
 ### Background
 
-Sepsis, a life-threatening organ dysfunction caused by a dysregulated host response to infection, remains a leading cause of mortality in intensive care units (ICUs) worldwide. With over 5 million deaths annually, the burden of sepsis on healthcare systems is profound, necessitating improved strategies for early detection and management.
+Sepsis, a life-threatening organ dysfunction caused by a dysregulated host response to infection, remains a leading cause of mortality in intensive care units (ICUs) worldwide. With over [5 million deaths annually](https://www.who.int/news-room/fact-sheets/detail/sepsis), the burden of sepsis on healthcare systems is profound, necessitating improved strategies for early detection and management.
 
 ### Challenges in Predicting Sepsis Outcomes
 
@@ -70,6 +70,8 @@ This report aims to replicate the study conducted by Hou et al. (2020), which de
 Validating and potentially enhancing predictive models for sepsis outcomes can aid clinicians in early identification of high-risk patients, enabling timely interventions and personalized treatment strategies. This study contributes to the growing body of evidence supporting the integration of machine learning in critical care settings.
 
 ## Methodology
+
+We used the Medical Information Mart for Intensive Care III database version 1.4 ([MIMIC III v1.4](https://doi.org/10.1038/sdata.2016.35)) for the study. MIMIC-III, a publicly available single-center critical care database which was approved by the Institutional Review Boards of Beth Israel Deaconess Medical Center (BIDMC, Boston, MA, USA) and the Massachusetts Institute of Technology (MIT, Cambridge, MA, USA), includes information on 46,520 patients who were admitted to various ICUs of BIDMC in Boston, Massachusetts from 2001 to 2012
 
 ### XGBoost
 
@@ -260,5 +262,9 @@ Mean value imputation was used to fill all `null` values.
 ## Appendices
 
 ## References
+- Hou, N., Li, M., He, L. et al. Predicting 30-days mortality for MIMIC-III patients with sepsis-3: a machine learning approach using XGboost. J Transl Med 18, 462 (2020). https://doi.org/10.1186/s12967-020-02620-5
 - https://cloud.google.com/bigquery/docs/python-libraries
 - https://xgboost.readthedocs.io/en/stable/
+- Johnson, A., Pollard, T., Shen, L. et al. MIMIC-III, a freely accessible critical care database. Sci Data 3, 160035 (2016). https://doi.org/10.1038/sdata.2016.35
+- https://www.who.int/news-room/fact-sheets/detail/sepsis
+- 
