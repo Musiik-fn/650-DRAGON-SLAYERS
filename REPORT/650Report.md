@@ -36,6 +36,7 @@ Table of Contents:
     - [Logistic Regression](#logistic-regression)
     - [Random Forest](#random-forest)
     - [XGBoost](#xgboost-1)
+    - [Model Comparison](#model-comparison)
   - [Discussion](#discussion)
   - [Conclusion](#conclusion)
   - [References](#references)
@@ -406,21 +407,86 @@ The data was standardized using `StandardScaler()`. The coefficient/feature impo
 
 ### Logistic Regression
 
+Feature Coefficient Table:
+| Feature                                             | Coefficient         | Abs Coefficient     |
+|-----------------------------------------------------|---------------------|---------------------|
+| LOS                                                 | -0.4932606042579501 | 0.4932606042579501  |
+| ETHNICITY_CONSOLIDATED_OTHER                        | 0.4496618910098512  | 0.4496618910098512  |
+| ETHNICITY_CONSOLIDATED_WHITE                        | -0.40819109301538914| 0.40819109301538914 |
+| AGE_AT_ADMISSION                                    | -0.3969062460840332 | 0.3969062460840332  |
+| ADMISSION_TYPE_URGENT                               | 0.3341514858193994  | 0.3341514858193994  |
+| OXYGEN_SAT_MEAN                                     | -0.2813922984121403 | 0.2813922984121403  |
+| GENDER_M                                            | -0.27312351145168834| 0.27312351145168834 |
+| BUN_MIN_VAL                                         | 0.24677433273110874 | 0.24677433273110874 |
+| ETHNICITY_CONSOLIDATED_BLACK OR AFRICAN AMERICAN    | -0.24360627899130383| 0.24360627899130383 |
+| POTASSIUM_MIN_VAL                                   | 0.22354275485744332 | 0.22354275485744332 |
+| ETHNICITY_CONSOLIDATED_HISPANIC OR LATINO           | 0.16890327194533392 | 0.16890327194533392 |
+| LOS_ICU_MEAN                                        | 0.1576491889366517  | 0.1576491889366517  |
+| CREATININE_MIN_VAL                                  | -0.1404407470985917 | 0.1404407470985917  |
+| WEIGHT_MEAN                                         | 0.139056926608819   | 0.139056926608819   |
+| INR_MIN_VAL                                         | 0.1371899462909558  | 0.1371899462909558  |
+
+
 
 ### Random Forest
 
+Feature Importance Table:
+| Feature                                             | Importance          |
+|-----------------------------------------------------|---------------------|
+| LOS                                                 | 0.0751990622383627  |
+| OXYGEN_SAT_MEAN                                     | 0.05343446104510928 |
+| AGE_AT_ADMISSION                                    | 0.04336838087830143 |
+| SBP_MEAN                                            | 0.041516251625344364|
+| PLATELET_MIN_VAL                                    | 0.03997843273489437 |
+| HEARTRATE_MEAN                                      | 0.0395753096345336  |
+| TEMP_MIN_C                                          | 0.03936314414109013 |
+| WEIGHT_MEAN                                         | 0.03915667520754803 |
+| DBP_MEAN                                            | 0.03862787206256848 |
+| LOS_ICU_MEAN                                        | 0.03814046174282419 |
+| RR_MEAN                                             | 0.037662277725471434|
+| HEMOGLOBIN_MIN_VAL                                  | 0.035895643404254864|
+| TEMP_MAX_C                                          | 0.03564243164480918 |
+| BUN_MAX_VAL                                         | 0.035147285383892744|
+| MAP_MEAN                                            | 0.034835832439807125|
 
 ### XGBoost
 
 Through `GridSearchCV()`, the best following XGBoost parameters were chosen: 
-
 ```
 Best Parameters: {'colsample_bytree': 0.6, 'learning_rate': 0.05, 'max_depth': 5, 'n_estimators': 200, 'subsample': 0.8}
 ```
+
+Feature Gain Table:
+| Feature                                             | Gain                | Normalized Gain     |
+|-----------------------------------------------------|---------------------|---------------------|
+| LOS                                                 | 11.8303804397583    | 0.07137593          |
+| ANIONGAP_MIN_VAL                                    | 8.511284828186035   | 0.05135092          |
+| AGE_AT_ADMISSION                                    | 6.546313762664795   | 0.03949571          |
+| OXYGEN_SAT_MEAN                                     | 6.159742832183838   | 0.03716342          |
+| ETHNICITY_CONSOLIDATED_ASIAN                        | 5.747664451599121   | 0.03467724          |
+| POTASSIUM_MIN_VAL                                   | 5.5271782875061035  | 0.03334698          |
+| INR_MIN_VAL                                         | 5.065011978149414   | 0.03055861          |
+| ETHNICITY_CONSOLIDATED_WHITE                        | 4.973119258880615   | 0.03000419          |
+| TEMP_MIN_C                                          | 4.901345729827881   | 0.02957116          |
+| SODIUM_MIN_VAL                                      | 4.747461318969727   | 0.02864274          |
+| ETHNICITY_CONSOLIDATED_HISPANIC OR LATINO           | 4.652392387390137   | 0.02806916          |
+| BUN_MIN_VAL                                         | 4.564362049102783   | 0.02753805          |
+| BUN_MAX_VAL                                         | 4.491528511047363   | 0.02709862          |
+| LACTATE_MIN_VAL                                     | 4.418938636779785   | 0.02666067          |
+| MAP_MEAN                                            | 4.241907596588135   | 0.02559259          |
+| CREATININE_MIN_VAL                                  | 4.1905012130737305  | 0.02528244          |
+
 ![XGBoost Confusion Matrix](Report%20Figures/CM_XGBoost.png)
 
 ![XGBoost Confusion Matrix](Report%20Figures/ROC_XGBoost.png)
 
+### Model Comparison
+
+Plotting the Average Precision and Receiver Operating Characteristic curves for all models onto a single graph, we have the following results:
+
+![AP Curve Comparison](Report%20Figures/Model_AP_Curves.png)
+
+![ROC Curve Comparison](Report%20Figures/Model_ROC_Curves.png)
 
 ## Discussion
 Our developed models were unable to achieve the same Area Under the Curve (AUC) scores as those reported in the replicated paper. We have identified the key factors which may have contributed to this discrepancy:
