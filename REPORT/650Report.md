@@ -89,11 +89,9 @@ From the [XGBoost documentation](https://xgboost.readthedocs.io/en/stable/),  XG
 
 ## Data Extraction
 
-Below is an image of the process which was used to prepare the data for model development. 
+We first extracted the given admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. After this, the data transformation steps included handling inconsistencies, missing values, outliers, and categorical feature encoding. Finally, the 30 day mortality column is defined.
 
 ![Patient Cohort Image](Report%20Figures/Data%20Preprocessing%20Figure(1).png)
-
-We first extracted the given admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. After this, the data transformation steps included handling inconsistencies, missing values, outliers, and categorical feature encoding. Finally, the 30 day mortality column is defined.
 
 All SQL statements used can be found in the file `Data_Extraction.sql`.
 
@@ -227,6 +225,19 @@ The following categorical features were used in the model: Sex, Ethnicity, and A
 | Contains `'UNKNOWN'`, `'NOT SPECIFIED'`, `'DECLINED TO ANSWER'`, or `'UNABLE TO OBTAIN'` | UNKNOWN/NOT SPECIFIED/DECLINED             |
 | Does not meet any of the above conditions                                         | OTHER                                      |
 
+After the ethnicity grouping was completed, the following results were observed:
+
+| Ethnicity                                       | Count |
+|-------------------------------------------------|-------|
+| WHITE                                           | 3,360 |
+| BLACK OR AFRICAN AMERICAN                       | 436   |
+| UNKNOWN/NOT SPECIFIED/DECLINED                  | 340   |
+| ASIAN                                           | 148   |
+| HISPANIC OR LATINO                              | 144   |
+| OTHER                                           | 117   |
+| AMERICAN INDIAN OR ALASKA NATIVE                 | 4     |
+| MIDDLE EASTERN                                  | 4     |
+| NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER       | 2     |
 
 
 ### Handling `NULL` Values
@@ -279,7 +290,9 @@ Mean value imputation was used to fill all `null` values.
 
 ### Handling Outliers
 
-The outliers were handled using [winsorization](https://www.sciencedirect.com/science/article/abs/pii/B9780123848642000287). Through this method, extreme values were limited to a chosen distance of 3 standard deviations from the mean. The function which handled this is defined in the file `dragonFunctions.py`. The function also tracks statsitcs of the variables before and after the operation. The results are contained in the file named `Outlier_Report.csv`. Below is the docstring of the function as well as a portion of the outlier report. 
+The outliers were handled using [winsorization](https://www.sciencedirect.com/science/article/abs/pii/B9780123848642000287). Instead of deleting outliers, and thereby losing degrees of freedom, Charles P. Winsor devised the strategy of replacing extreme data by duplicating values of less extreme data in the sample. Winsor’s approach was to replace an outlier with the next datum closer to the mean.  
+
+Through this method, extreme values were limited to a chosen distance of 3 standard deviations from the mean. The function which handled this is defined in the file `dragonFunctions.py`. The function also tracks statsitcs of the variables before and after the operation. The results are contained in the file named `Outlier_Report.csv`. Below is the docstring of the function and a portion of the outlier report. 
 
 ```python
 def preprocess_outliers(df, threshold=3):
@@ -340,7 +353,7 @@ This section includes the exploratory data analysis
 
 ### Patient Cohort
 
-After all filtering, our final cohort contains 1274 patients which died within 30 days and 3281 patients which survived within 30 days. 
+After all filtering, our final cohort contains 1274 patients who died within 30 days and 3281 patients who survived within 30 days. 
 
 ![Patient Cohort Image](Report%20Figures/Patient%20Selection%20Figure.png)
 
@@ -379,14 +392,34 @@ Below is a table of the numerical baseline characteristics, vital signs, laborat
 | 26 | POTASSIUM_MIN_VAL                                       | 3.0785 (3.0576, 3.0995)                    | 3.2703 (3.2551, 3.2856)                    | 3.694125814703512e-46        |
 | 27 | SODIUM_MIN_VAL                                          | 130.9360 (130.6529, 131.2192)              | 132.2608 (132.0762, 132.4454)              | 2.1554673074035844e-14        |
 
+For the categorical features, a chi-squared test was applied and the following results were given: 
+| Variable  | Chi-squared Statistic     | P-value                | Degrees of Freedom |
+|-----------|---------------------------|------------------------|--------------------|
+| ETHNICITY | 21.940778878649233        | 0.005026763602206442   | 8                  |
+| GENDER    | 1.4287106646326184        | 0.23197497397598826    | 1                  |
+| ADMISSION_TYPE | 8.743278584659594       | 0.012630518475803666    | 2                  |
+
+The chi-squared analysis reveals that ethnicity and admission type are is significantly associated with 30-day mortality in sepsis patients, while gender is not.
 
 ## Model Results
+The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder.
 
 ### Logistic Regression
 
+
 ### Random Forest
 
+
 ### XGBoost
+
+Through `GridSearchCV()`, the best following XGBoost parameters were chosen: 
+
+```
+Best Parameters: {'colsample_bytree': 0.6, 'learning_rate': 0.05, 'max_depth': 5, 'n_estimators': 200, 'subsample': 0.8}
+```
+![XGBoost Confusion Matrix](Report%20Figures/CM_XGBoost.png)
+
+![XGBoost Confusion Matrix](Report%20Figures/ROC_XGBoost.png)
 
 
 ## Discussion

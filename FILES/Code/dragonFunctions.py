@@ -1,7 +1,7 @@
 import pandas as pd
 from scipy import stats
 import numpy as np
-
+from pathlib import Path
 def mean_confidence_interval(data, confidence=0.95):
     """
     Calculate the mean and confidence interval for a list of numbers.
@@ -222,4 +222,8 @@ def compare_summary_stats(summary_before, summary_after, capped_summary):
     
     return comparison_table
 
+def save_dataframe(df, filename, base_dir):
+    file_path = base_dir / filename
+    df.to_csv(file_path, index=False)
+    print(f"{filename} saved successfully at: {file_path.resolve()}")
     
