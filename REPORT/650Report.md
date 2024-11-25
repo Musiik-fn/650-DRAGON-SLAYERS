@@ -37,6 +37,7 @@ Table of Contents:
     - [Random Forest](#random-forest)
     - [XGBoost](#xgboost-1)
     - [Model Comparison](#model-comparison)
+      - [Selected Features](#selected-features)
   - [Discussion](#discussion)
   - [Conclusion](#conclusion)
   - [References](#references)
@@ -79,6 +80,8 @@ Validating and potentially enhancing predictive models for sepsis outcomes can a
 
 ## Methodology
 
+The primary code used in this project can be found in the directory `FILES > Code`.
+
 ### Database Interfacing
 
 Similar to the source paper, we used the Medical Information Mart for Intensive Care III database version 1.4 ([MIMIC III v1.4](https://doi.org/10.1038/sdata.2016.35)) for the study. MIMIC-III, a publicly available single-center critical care database which was approved by the Institutional Review Boards of Beth Israel Deaconess Medical Center (BIDMC, Boston, MA, USA) and the Massachusetts Institute of Technology (MIT, Cambridge, MA, USA), includes information on 46,520 patients who were admitted to various ICUs of BIDMC in Boston, Massachusetts from 2001 to 2012. The data was accessed via the Google BigQuery cloud platform and subsequently extracted and processed using SQL and Python. Additionally, the models were developed and evaluated in Python. This approach contrasts with the target paper, which primarily utilized R for these tasks.
@@ -94,7 +97,7 @@ We first extracted the given admission and patient data of all patients who were
 
 ![Patient Cohort Image](Report%20Figures/Data%20Preprocessing%20Figure(1).png)
 
-All SQL statements used can be found in the file `Data_Extraction.sql`.
+All SQL statements used can be found in the file `Data_Extraction.sql`. The related Python code can be found in the file `650DataExtract.ipynb`.
 
 ### Patient Selection Criteria and Query
 
@@ -362,36 +365,48 @@ After all filtering, our final cohort contains 1274 patients who died within 30 
 
 Below is a table of the numerical baseline characteristics, vital signs, laboratory parameters and statistic results of mimic-III patients with sepsis. The table highlights several significant differences in baseline characteristics, vital signs, and laboratory parameters between sepsis patients who survived and those who did not within 30 days. Key predictors of mortality include older age, longer hospital and ICU stays, higher systolic and mean arterial pressures, lower heart rates, elevated BUN, lactate, anion gap, INR, and creatinine levels, as well as significant coagulation abnormalities indicated by platelet counts.
 
-| #  | Feature                                                 | Mean (Death within 30 days) [95% CI]                         | Mean (Survival within 30 days) [95% CI]                         | p-value                  |
+| Column Index  | Feature                                                 | Mean (Death within 30 days) [95% CI]                         | Mean (Survival within 30 days) [95% CI]                         | p-value                  |
 |----|---------------------------------------------------------|-------------------------------------------|-------------------------------------------|--------------------------|
-| 0  | AGE_AT_ADMISSION                                       | 70.2793 (69.4675, 71.0911)                | 66.3547 (65.8040, 66.9055)                | 6.2423475069410055e-15    |
+| 18 | ANIONGAP_MIN_VAL                                        | 8.5226 (8.4010, 8.6442)                    | 9.8713 (9.7721, 9.9706)                    | 5.804219462456842e-61    |
 | 1  | LOS                                                     | 18.5120 (17.7062, 19.3177)                | 11.3806 (11.0295, 11.7316)                | 1.9994524351984268e-53    |
-| 2  | LOS_ICU_MEAN                                            | 7.1504 (6.7878, 7.5131)                    | 5.6759 (5.4888, 5.8630)                    | 1.8824470974372263e-12    |
-| 3  | WEIGHT_MEAN                                             | 79.9468 (78.8430, 81.0506)                | 82.9039 (82.1627, 83.6451)                | 1.337480960599974e-05     |
-| 4  | HEARTRATE_MEAN                                          | 87.0909 (86.4337, 87.7481)                | 89.9568 (89.5002, 90.4135)                | 2.743262197438905e-12     |
-| 5  | SBP_MEAN                                                | 115.8958 (115.1019, 116.6897)             | 112.6069 (112.0836, 113.1301)             | 1.4512206581707315e-11    |
-| 6  | DBP_MEAN                                                | 58.5420 (58.0619, 59.0220)                | 58.9291 (58.6115, 59.2467)                | 0.1872252166711786         |
-| 7  | MAP_MEAN                                                | 76.0140 (75.5646, 76.4634)                | 75.0111 (74.6983, 75.3239)                | 0.0003334220111951916      |
-| 8  | RR_MEAN                                                 | 20.1908 (20.0177, 20.3639)                | 20.4973 (20.3766, 20.6181)                | 0.004415739666238388        |
-| 9  | TEMP_MIN_C                                              | 34.3334 (34.1245, 34.5424)                | 34.7919 (34.6779, 34.9059)                | 0.00016306792291858775     |
-| 10 | TEMP_MAX_C                                              | 39.3719 (39.0492, 39.6947)                | 39.1706 (38.9667, 39.3745)                | 0.3011192382325408          |
-| 11 | OXYGEN_SAT_MEAN                                         | 97.1715 (97.0979, 97.2451)                | 96.3800 (96.3059, 96.4541)                | 1.3911908285127357e-48      |
-| 12 | DIABETES                                                | 0.3885 (0.3617, 0.4153)                    | 0.3472 (0.3309, 0.3634)                    | 0.009707880047703427        |
-| 13 | ANIONGAP_MAX_VAL                                        | 21.0742 (20.8063, 21.3422)                | 20.9933 (20.8107, 21.1759)                | 0.6244584585997122          |
-| 14 | BUN_MAX_VAL                                             | 63.7555 (61.8355, 65.6755)                | 56.9016 (55.7133, 58.0899)                | 3.0159367740247727e-09      |
-| 15 | HEMOGLOBIN_MAX_VAL                                      | 12.7976 (12.7051, 12.8902)                | 12.6557 (12.5938, 12.7176)                | 0.012476564718123813        |
-| 16 | INR_MAX_VAL                                             | 3.2497 (3.0991, 3.4004)                    | 2.8127 (2.7315, 2.8939)                    | 5.972261612669238e-07        |
-| 17 | SODIUM_MAX_VAL                                          | 146.6111 (146.3550, 146.8673)             | 144.7146 (144.5420, 144.8873)             | 1.653643639974896e-32        |
-| 18 | ANIONGAP_MIN_VAL                                        | 8.5226 (8.4010, 8.6442)                    | 9.8713 (9.7721, 9.9706)                    | 5.804219462456842e-61        |
-| 19 | BUN_MIN_VAL                                             | 13.0178 (12.5203, 13.5152)                | 16.2705 (15.8542, 16.6867)                | 1.6903585610211654e-22        |
-| 20 | CHLORIDE_MIN_VAL                                        | 95.4482 (95.1205, 95.7758)                 | 96.9124 (96.6922, 97.1326)                 | 4.640940223674255e-13        |
-| 21 | CREATININE_MIN_VAL                                      | 0.8351 (0.8033, 0.8668)                    | 0.9469 (0.9253, 0.9684)                    | 1.2462387708005441e-08        |
-| 22 | HEMOGLOBIN_MIN_VAL                                      | 7.7102 (7.6326, 7.7879)                    | 8.3235 (8.2666, 8.3803)                    | 7.003674251346475e-35        |
-| 23 | INR_MIN_VAL                                             | 1.0944 (1.0845, 1.1044)                    | 1.1784 (1.1699, 1.1869)                    | 2.513150150344204e-35        |
-| 24 | LACTATE_MIN_VAL                                         | 1.0757 (1.0487, 1.1027)                    | 1.3592 (1.3321, 1.3863)                    | 1.1754059843635527e-46        |
-| 25 | PLATELET_MIN_VAL                                        | 117.7276 (113.4049, 122.0504)              | 130.2693 (127.4697, 133.0690)              | 1.8898490558943614e-06        |
-| 26 | POTASSIUM_MIN_VAL                                       | 3.0785 (3.0576, 3.0995)                    | 3.2703 (3.2551, 3.2856)                    | 3.694125814703512e-46        |
-| 27 | SODIUM_MIN_VAL                                          | 130.9360 (130.6529, 131.2192)              | 132.2608 (132.0762, 132.4454)              | 2.1554673074035844e-14        |
+| 24 | LACTATE_MIN_VAL                                         | 1.0757 (1.0487, 1.1027)                    | 1.3592 (1.3321, 1.3863)                    | 1.1754059843635527e-46   |
+| 26 | POTASSIUM_MIN_VAL                                       | 3.0785 (3.0576, 3.0995)                    | 3.2703 (3.2551, 3.2856)                    | 3.694125814703512e-46    |
+| 11 | OXYGEN_SAT_MEAN                                         | 97.1715 (97.0979, 97.2451)                | 96.3800 (96.3059, 96.4541)                | 1.3911908285127357e-48   |
+| 17 | SODIUM_MAX_VAL                                          | 146.6111 (146.3550, 146.8673)             | 144.7146 (144.5420, 144.8873)             | 1.653643639974896e-32    |
+| 22 | HEMOGLOBIN_MIN_VAL                                      | 7.7102 (7.6326, 7.7879)                    | 8.3235 (8.2666, 8.3803)                    | 7.003674251346475e-35    |
+| 23 | INR_MIN_VAL                                             | 1.0944 (1.0845, 1.1044)                    | 1.1784 (1.1699, 1.1869)                    | 2.513150150344204e-35    |
+| 19 | BUN_MIN_VAL                                             | 13.0178 (12.5203, 13.5152)                | 16.2705 (15.8542, 16.6867)                | 1.6903585610211654e-22   |
+| 27 | SODIUM_MIN_VAL                                          | 130.9360 (130.6529, 131.2192)              | 132.2608 (132.0762, 132.4454)              | 2.1554673074035844e-14   |
+| 0  | AGE_AT_ADMISSION                                       | 70.2793 (69.4675, 71.0911)                | 66.3547 (65.8040, 66.9055)                | 6.2423475069410055e-15   |
+| 20 | CHLORIDE_MIN_VAL                                        | 95.4482 (95.1205, 95.7758)                 | 96.9124 (96.6922, 97.1326)                 | 4.640940223674255e-13    |
+| 4  | HEARTRATE_MEAN                                          | 87.0909 (86.4337, 87.7481)                | 89.9568 (89.5002, 90.4135)                | 2.743262197438905e-12    |
+| 2  | LOS_ICU_MEAN                                            | 7.1504 (6.7878, 7.5131)                    | 5.6759 (5.4888, 5.8630)                    | 1.8824470974372263e-12   |
+| 5  | SBP_MEAN                                                | 115.8958 (115.1019, 116.6897)             | 112.6069 (112.0836, 113.1301)             | 1.4512206581707315e-11   |
+| 21 | CREATININE_MIN_VAL                                      | 0.8351 (0.8033, 0.8668)                    | 0.9469 (0.9253, 0.9684)                    | 1.2462387708005441e-08   |
+| 14 | BUN_MAX_VAL                                             | 63.7555 (61.8355, 65.6755)                | 56.9016 (55.7133, 58.0899)                | 3.0159367740247727e-09   |
+| 16 | INR_MAX_VAL                                             | 3.2497 (3.0991, 3.4004)                    | 2.8127 (2.7315, 2.8939)                    | 5.972261612669238e-07    |
+| 25 | PLATELET_MIN_VAL                                        | 117.7276 (113.4049, 122.0504)              | 130.2693 (127.4697, 133.0690)              | 1.8898490558943614e-06   |
+| 3  | WEIGHT_MEAN                                             | 79.9468 (78.8430, 81.0506)                | 82.9039 (82.1627, 83.6451)                | 1.337480960599974e-05    |
+| 9  | TEMP_MIN_C                                              | 34.3334 (34.1245, 34.5424)                | 34.7919 (34.6779, 34.9059)                | 0.00016306792291858775   |
+| 7  | MAP_MEAN                                                | 76.0140 (75.5646, 76.4634)                | 75.0111 (74.6983, 75.3239)                | 0.0003334220111951916    |
+| 8  | RR_MEAN                                                 | 20.1908 (20.0177, 20.3639)                | 20.4973 (20.3766, 20.6181)                | 0.004415739666238388     |
+| 12 | DIABETES                                                | 0.3885 (0.3617, 0.4153)                    | 0.3472 (0.3309, 0.3634)                    | 0.009707880047703427     |
+| 15 | HEMOGLOBIN_MAX_VAL                                      | 12.7976 (12.7051, 12.8902)                | 12.6557 (12.5938, 12.7176)                | 0.012476564718123813     |
+| 6  | DBP_MEAN                                                | 58.5420 (58.0619, 59.0220)                | 58.9291 (58.6115, 59.2467)                | 0.1872252166711786       |
+| 10 | TEMP_MAX_C                                              | 39.3719 (39.0492, 39.6947)                | 39.1706 (38.9667, 39.3745)                | 0.3011192382325408       |
+| 13 | ANIONGAP_MAX_VAL                                        | 21.0742 (20.8063, 21.3422)                | 20.9933 (20.8107, 21.1759)                | 0.6244584585997122       |
+
+Below are the distributions of the features with the lowest p-values.
+
+![EDA](Report%20Figures/EDA%20Visuals/AGE.png)
+![EDA](Report%20Figures/EDA%20Visuals/ANIONGAP_MIN.png)
+![EDA](Report%20Figures/EDA%20Visuals/LACTATE_MIN.png)
+![EDA](Report%20Figures/EDA%20Visuals/LOS.png)
+![EDA](Report%20Figures/EDA%20Visuals/O2SAT.png)
+![EDA](Report%20Figures/EDA%20Visuals/POTASSIUM_MIN.png)
+![EDA](Report%20Figures/EDA%20Visuals/SODIUM_MIN.png)
+
+All histograms and box plots can be found in `FILES > Code > 650EDA.ipynb`
 
 For the categorical features, a chi-squared test was applied and the following results were given: 
 | Variable  | Chi-squared Statistic     | P-value                | Degrees of Freedom |
@@ -402,8 +417,9 @@ For the categorical features, a chi-squared test was applied and the following r
 
 The chi-squared analysis reveals that ethnicity and admission type are is significantly associated with 30-day mortality in sepsis patients, while gender is not.
 
+
 ## Model Results
-The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder.
+The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder. The code related to model development can be found in the file `650Models.ipynb`. This notebook utilizes many custom functions defined in the library file `dragonFunctions.py`.
 
 ### Logistic Regression
 
@@ -513,6 +529,12 @@ Plotting the Average Precision and Receiver Operating Characteristic curves for 
 ![AP Curve Comparison](Report%20Figures/Plots/Combined_ROC_Curves.png)
 
 ![ROC Curve Comparison](Report%20Figures/Plots/Combined_Precision_Recall_Curves.png)
+
+XGBoost attains the highest values for both AUC and AP, and is therefore the most optimal model given the dataset. 
+
+#### Selected Features
+Amongst all models, the baseline features of AGE and LOS (Length of Stay) were significant features. In terms of the vitals and laboratory signs, OXYGEN_SAT_MEAN stands out as the most important vital sign, consistently appearing as a top predictor. Other vital signs and lab values such as BUN levels, POTASSIUM_MIN_VAL, INR_MIN_VAL, CREATININE_MIN_VAL, TEMP_MIN_C, MAP_MEAN, and WEIGHT_MEAN are also significant in multiple models, reinforcing their relevance in predicting patient outcomes.
+
 
 ## Discussion
 Our developed models were unable to achieve the same Area Under the Curve (AUC) scores as those reported in the replicated paper. We have identified the key factors which may have contributed to this discrepancy:
