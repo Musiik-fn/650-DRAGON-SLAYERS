@@ -32,7 +32,11 @@ Table of Contents:
   - [Exploratory Data Analysis](#exploratory-data-analysis)
     - [Patient Cohort](#patient-cohort)
     - [Feature Statistics](#feature-statistics)
-  - [Model Development and Evaluation](#model-development-and-evaluation)
+  - [Model Results](#model-results)
+    - [Logistic Regression](#logistic-regression)
+    - [Random Forest](#random-forest)
+    - [XGBoost](#xgboost-1)
+    - [Model Comparison](#model-comparison)
   - [Discussion](#discussion)
   - [Conclusion](#conclusion)
   - [References](#references)
@@ -86,11 +90,9 @@ From the [XGBoost documentation](https://xgboost.readthedocs.io/en/stable/),  XG
 
 ## Data Extraction
 
-Below is an image of the process which was used to prepare the data for model development. 
+We first extracted the given admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. After this, the data transformation steps included handling inconsistencies, missing values, outliers, and categorical feature encoding. Finally, the 30 day mortality column is defined.
 
 ![Patient Cohort Image](Report%20Figures/Data%20Preprocessing%20Figure(1).png)
-
-We first extracted the given admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. After this, the data transformation steps included handling inconsistencies, missing values, outliers, and categorical feature encoding. Finally, the 30 day mortality column is defined.
 
 All SQL statements used can be found in the file `Data_Extraction.sql`.
 
@@ -224,6 +226,19 @@ The following categorical features were used in the model: Sex, Ethnicity, and A
 | Contains `'UNKNOWN'`, `'NOT SPECIFIED'`, `'DECLINED TO ANSWER'`, or `'UNABLE TO OBTAIN'` | UNKNOWN/NOT SPECIFIED/DECLINED             |
 | Does not meet any of the above conditions                                         | OTHER                                      |
 
+After the ethnicity grouping was completed, the following results were observed:
+
+| Ethnicity                                       | Count |
+|-------------------------------------------------|-------|
+| WHITE                                           | 3,360 |
+| BLACK OR AFRICAN AMERICAN                       | 436   |
+| UNKNOWN/NOT SPECIFIED/DECLINED                  | 340   |
+| ASIAN                                           | 148   |
+| HISPANIC OR LATINO                              | 144   |
+| OTHER                                           | 117   |
+| AMERICAN INDIAN OR ALASKA NATIVE                 | 4     |
+| MIDDLE EASTERN                                  | 4     |
+| NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER       | 2     |
 
 
 ### Handling `NULL` Values
@@ -276,7 +291,9 @@ Mean value imputation was used to fill all `null` values.
 
 ### Handling Outliers
 
-The outliers were handled using [winsorization](https://www.sciencedirect.com/science/article/abs/pii/B9780123848642000287). Through this method, extreme values were limited to a chosen distance of 3 standard deviations from the mean. The function which handled this is defined in the file `dragonFunctions.py`. The function also tracks statsitcs of the variables before and after the operation. The results are contained in the file named `Outlier_Report.csv`. Below is the docstring of the function as well as a portion of the outlier report. 
+The outliers were handled using [winsorization](https://www.sciencedirect.com/science/article/abs/pii/B9780123848642000287). Instead of deleting outliers, and thereby losing degrees of freedom, Charles P. Winsor devised the strategy of replacing extreme data by duplicating values of less extreme data in the sample. Winsor’s approach was to replace an outlier with the next datum closer to the mean.  
+
+Through this method, extreme values were limited to a chosen distance of 3 standard deviations from the mean. The function which handled this is defined in the file `dragonFunctions.py`. The function also tracks statsitcs of the variables before and after the operation. The results are contained in the file named `Outlier_Report.csv`. Below is the docstring of the function and a portion of the outlier report. 
 
 ```python
 def preprocess_outliers(df, threshold=3):
@@ -337,56 +354,183 @@ This section includes the exploratory data analysis
 
 ### Patient Cohort
 
+After all filtering, our final cohort contains 1274 patients who died within 30 days and 3281 patients who survived within 30 days. 
+
 ![Patient Cohort Image](Report%20Figures/Patient%20Selection%20Figure.png)
 
 ### Feature Statistics
 
-Below is a table of the numerical baseline characteristics, vital signs, laboratory parameters and statistic results of mimic-III patients with sepsis. The table highlights several significant differences in baseline characteristics, vital signs, and laboratory parameters between sepsis patients who survived and those who did not within 30 days. Key predictors of mortality include renal and metabolic dysfunction indicators (e.g., elevated BUN, lactate, and anion gap), hemodynamic instability (e.g., lower SBP and MAP), respiratory distress (e.g., lower oxygen saturation), coagulation abnormalities (e.g., elevated INR), older age, and shorter hospital stays.  
+Below is a table of the numerical baseline characteristics, vital signs, laboratory parameters and statistic results of mimic-III patients with sepsis. The table highlights several significant differences in baseline characteristics, vital signs, and laboratory parameters between sepsis patients who survived and those who did not within 30 days. Key predictors of mortality include older age, longer hospital and ICU stays, higher systolic and mean arterial pressures, lower heart rates, elevated BUN, lactate, anion gap, INR, and creatinine levels, as well as significant coagulation abnormalities indicated by platelet counts.
 
-| Feature                             | Mean (`MORTALITY=0`) [95% CI]                      | Mean (`MORTALITY=1`) [95% CI]                      | p-value            |
-|-------------------------------------|----------------------------------------|----------------------------------------|--------------------|
-| BUN_MIN_VAL                         | 11.8391 (11.5640, 12.1142)             | 20.5947 (19.9426, 21.2469)             | 2.57E-115          |
-| LACTATE_MAX_VAL                     | 3.9765 (3.8948, 4.0583)                | 6.0467 (5.8692, 6.2242)                | 5.23E-88           |
-| SBP_MEAN                            | 116.4027 (115.9590, 116.8464)          | 107.2450 (106.4869, 108.0031)          | 1.43E-86           |
-| LACTATE_MIN_VAL                     | 1.0718 (1.0557, 1.0879)                | 1.5583 (1.5135, 1.6032)                | 1.85E-81           |
-| PLATELET_MAX_VAL                    | 441.4380 (434.7949, 448.0812)          | 330.5968 (321.2474, 339.9461)          | 4.63E-76           |
-| DBP_MEAN                            | 60.3454 (60.0613, 60.6295)             | 55.5000 (55.0728, 55.9272)             | 1.16E-72           |
-| MAP_MEAN                            | 76.7521 (76.4814, 77.0228)             | 72.0117 (71.5865, 72.4370)             | 5.97E-72           |
-| ANIONGAP_MIN_VAL                    | 8.7372 (8.6631, 8.8112)                 | 10.4310 (10.2674, 10.5945)             | 2.59E-71           |
-| INR_MIN_VAL                         | 1.0987 (1.0928, 1.1046)                 | 1.2277 (1.2137, 1.2416)                 | 3.47E-59           |
-| ANIONGAP_MAX_VAL                    | 20.4475 (20.2887, 20.6063)             | 23.0914 (22.8143, 23.3685)             | 1.27E-56           |
-| OXYGEN_SAT_MEAN                     | 97.0256 (96.9806, 97.0706)             | 95.9278 (95.8015, 96.0541)             | 1.07E-54           |
-| BUN_MAX_VAL                         | 55.8206 (54.6891, 56.9521)             | 71.1694 (69.4175, 72.9213)             | 1.08E-45           |
-| CREATININE_MIN_VAL                  | 0.8126 (0.7950, 0.8302)                 | 1.0903 (1.0554, 1.1252)                 | 1.63E-42           |
-| POTASSIUM_MIN_VAL                   | 3.1267 (3.1137, 3.1396)                 | 3.2987 (3.2745, 3.3229)                 | 1.11E-33           |
-| PLATELET_MIN_VAL                    | 131.1287 (128.6262, 133.6312)           | 106.7732 (102.7303, 110.8161)           | 2.32E-23           |
-| TEMP_MEAN_C                         | 36.8956 (36.8784, 36.9128)              | 36.6986 (36.6639, 36.7332)              | 4.74E-23           |
-| HEMOGLOBIN_MAX_VAL                  | 12.9470 (12.8892, 13.0047)              | 12.4502 (12.3625, 12.5379)              | 3.06E-20           |
-| HEARTRATE_MEAN                      | 87.7993 (87.4007, 88.1978)              | 91.4300 (90.7714, 92.0887)              | 4.34E-20           |
-| AGE_AT_ADMISSION                    | 66.3109 (65.7908, 66.8310)              | 69.6846 (68.9492, 70.4200)              | 2.58E-13           |
-| RR_MEAN                             | 20.1052 (19.9986, 20.2117)              | 20.7528 (20.5759, 20.9297)              | 8.85E-10           |
-| CREATININE_MAX_VAL                  | 3.0329 (2.9365, 3.1292)                  | 3.5043 (3.3746, 3.6340)                  | 1.14E-08           |
-| INR_MAX_VAL                         | 2.9458 (2.8593, 3.0322)                  | 3.3974 (3.2649, 3.5299)                  | 2.35E-08           |
-| LOS_ICU_MEAN                        | 5.7327 (5.5569, 5.9084)                  | 6.7263 (6.4204, 7.0322)                  | 3.63E-08           |
-| CHLORIDE_MAX_VAL                    | 113.0423 (112.8532, 113.2313)            | 112.0484 (111.7189, 112.3778)            | 3.07E-07           |
-| LOS                                 | 14.0054 (13.6193, 14.3915)               | 12.2591 (11.6275, 12.8906)               | 3.88E-06           |
-| TEMP_MIN_C                          | 34.6777 (34.5590, 34.7963)               | 34.1539 (33.9566, 34.3511)               | 8.39E-06           |
-| SODIUM_MAX_VAL                      | 145.8018 (145.6469, 145.9568)            | 145.1029 (144.8254, 145.3804)            | 1.67E-05           |
-| POTASSIUM_MAX_VAL                   | 5.5335 (5.4959, 5.5711)                  | 5.6390 (5.5861, 5.6920)                  | 0.001451080247     |
-| DIABETES                            | 0.3809 (0.3650, 0.3968)                  | 0.3561 (0.3326, 0.3796)                  | 0.08707751955      |
-| HEMOGLOBIN_MIN_VAL                  | 7.9936 (7.9412, 8.0459)                  | 8.0622 (7.9807, 8.1437)                  | 0.1646019274       |
-| SODIUM_MIN_VAL                      | 131.5808 (131.4097, 131.7518)            | 131.3721 (131.0853, 131.6589)            | 0.2204434812       |
-| TEMP_MAX_C                          | 39.6228 (39.3885, 39.8571)               | 39.3669 (39.0131, 39.7207)               | 0.2370434699       |
-| WEIGHT_MEAN                         | 81.9442 (81.2536, 82.6348)               | 81.9198 (80.8720, 82.9676)               | 0.9695997544       |
-| CHLORIDE_MIN_VAL                    | 96.1065 (95.9060, 96.3070)               | 96.1136 (95.7766, 96.4507)               | 0.9715199933       |
+| #  | Feature                                                 | Mean (Death within 30 days) [95% CI]                         | Mean (Survival within 30 days) [95% CI]                         | p-value                  |
+|----|---------------------------------------------------------|-------------------------------------------|-------------------------------------------|--------------------------|
+| 0  | AGE_AT_ADMISSION                                       | 70.2793 (69.4675, 71.0911)                | 66.3547 (65.8040, 66.9055)                | 6.2423475069410055e-15    |
+| 1  | LOS                                                     | 18.5120 (17.7062, 19.3177)                | 11.3806 (11.0295, 11.7316)                | 1.9994524351984268e-53    |
+| 2  | LOS_ICU_MEAN                                            | 7.1504 (6.7878, 7.5131)                    | 5.6759 (5.4888, 5.8630)                    | 1.8824470974372263e-12    |
+| 3  | WEIGHT_MEAN                                             | 79.9468 (78.8430, 81.0506)                | 82.9039 (82.1627, 83.6451)                | 1.337480960599974e-05     |
+| 4  | HEARTRATE_MEAN                                          | 87.0909 (86.4337, 87.7481)                | 89.9568 (89.5002, 90.4135)                | 2.743262197438905e-12     |
+| 5  | SBP_MEAN                                                | 115.8958 (115.1019, 116.6897)             | 112.6069 (112.0836, 113.1301)             | 1.4512206581707315e-11    |
+| 6  | DBP_MEAN                                                | 58.5420 (58.0619, 59.0220)                | 58.9291 (58.6115, 59.2467)                | 0.1872252166711786         |
+| 7  | MAP_MEAN                                                | 76.0140 (75.5646, 76.4634)                | 75.0111 (74.6983, 75.3239)                | 0.0003334220111951916      |
+| 8  | RR_MEAN                                                 | 20.1908 (20.0177, 20.3639)                | 20.4973 (20.3766, 20.6181)                | 0.004415739666238388        |
+| 9  | TEMP_MIN_C                                              | 34.3334 (34.1245, 34.5424)                | 34.7919 (34.6779, 34.9059)                | 0.00016306792291858775     |
+| 10 | TEMP_MAX_C                                              | 39.3719 (39.0492, 39.6947)                | 39.1706 (38.9667, 39.3745)                | 0.3011192382325408          |
+| 11 | OXYGEN_SAT_MEAN                                         | 97.1715 (97.0979, 97.2451)                | 96.3800 (96.3059, 96.4541)                | 1.3911908285127357e-48      |
+| 12 | DIABETES                                                | 0.3885 (0.3617, 0.4153)                    | 0.3472 (0.3309, 0.3634)                    | 0.009707880047703427        |
+| 13 | ANIONGAP_MAX_VAL                                        | 21.0742 (20.8063, 21.3422)                | 20.9933 (20.8107, 21.1759)                | 0.6244584585997122          |
+| 14 | BUN_MAX_VAL                                             | 63.7555 (61.8355, 65.6755)                | 56.9016 (55.7133, 58.0899)                | 3.0159367740247727e-09      |
+| 15 | HEMOGLOBIN_MAX_VAL                                      | 12.7976 (12.7051, 12.8902)                | 12.6557 (12.5938, 12.7176)                | 0.012476564718123813        |
+| 16 | INR_MAX_VAL                                             | 3.2497 (3.0991, 3.4004)                    | 2.8127 (2.7315, 2.8939)                    | 5.972261612669238e-07        |
+| 17 | SODIUM_MAX_VAL                                          | 146.6111 (146.3550, 146.8673)             | 144.7146 (144.5420, 144.8873)             | 1.653643639974896e-32        |
+| 18 | ANIONGAP_MIN_VAL                                        | 8.5226 (8.4010, 8.6442)                    | 9.8713 (9.7721, 9.9706)                    | 5.804219462456842e-61        |
+| 19 | BUN_MIN_VAL                                             | 13.0178 (12.5203, 13.5152)                | 16.2705 (15.8542, 16.6867)                | 1.6903585610211654e-22        |
+| 20 | CHLORIDE_MIN_VAL                                        | 95.4482 (95.1205, 95.7758)                 | 96.9124 (96.6922, 97.1326)                 | 4.640940223674255e-13        |
+| 21 | CREATININE_MIN_VAL                                      | 0.8351 (0.8033, 0.8668)                    | 0.9469 (0.9253, 0.9684)                    | 1.2462387708005441e-08        |
+| 22 | HEMOGLOBIN_MIN_VAL                                      | 7.7102 (7.6326, 7.7879)                    | 8.3235 (8.2666, 8.3803)                    | 7.003674251346475e-35        |
+| 23 | INR_MIN_VAL                                             | 1.0944 (1.0845, 1.1044)                    | 1.1784 (1.1699, 1.1869)                    | 2.513150150344204e-35        |
+| 24 | LACTATE_MIN_VAL                                         | 1.0757 (1.0487, 1.1027)                    | 1.3592 (1.3321, 1.3863)                    | 1.1754059843635527e-46        |
+| 25 | PLATELET_MIN_VAL                                        | 117.7276 (113.4049, 122.0504)              | 130.2693 (127.4697, 133.0690)              | 1.8898490558943614e-06        |
+| 26 | POTASSIUM_MIN_VAL                                       | 3.0785 (3.0576, 3.0995)                    | 3.2703 (3.2551, 3.2856)                    | 3.694125814703512e-46        |
+| 27 | SODIUM_MIN_VAL                                          | 130.9360 (130.6529, 131.2192)              | 132.2608 (132.0762, 132.4454)              | 2.1554673074035844e-14        |
+
+For the categorical features, a chi-squared test was applied and the following results were given: 
+| Variable  | Chi-squared Statistic     | P-value                | Degrees of Freedom |
+|-----------|---------------------------|------------------------|--------------------|
+| ETHNICITY | 21.940778878649233        | 0.005026763602206442   | 8                  |
+| GENDER    | 1.4287106646326184        | 0.23197497397598826    | 1                  |
+| ADMISSION_TYPE | 8.743278584659594       | 0.012630518475803666    | 2                  |
+
+The chi-squared analysis reveals that ethnicity and admission type are is significantly associated with 30-day mortality in sepsis patients, while gender is not.
+
+## Model Results
+The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder.
+
+### Logistic Regression
 
 
-## Model Development and Evaluation
+![LR_ROC](Report%20Figures/Plots/ROC_Curve_Logistic%20Regression.png)
 
+| Feature                                             | Coefficient         | Abs Coefficient     |
+|-----------------------------------------------------|---------------------|---------------------|
+| LOS                                                 | -0.4932606042579501 | 0.4932606042579501  |
+| ETHNICITY_CONSOLIDATED_OTHER                        | 0.4496618910098512  | 0.4496618910098512  |
+| ETHNICITY_CONSOLIDATED_WHITE                        | -0.40819109301538914| 0.40819109301538914 |
+| AGE_AT_ADMISSION                                    | -0.3969062460840332 | 0.3969062460840332  |
+| ADMISSION_TYPE_URGENT                               | 0.3341514858193994  | 0.3341514858193994  |
+| OXYGEN_SAT_MEAN                                     | -0.2813922984121403 | 0.2813922984121403  |
+| GENDER_M                                            | -0.27312351145168834| 0.27312351145168834 |
+| BUN_MIN_VAL                                         | 0.24677433273110874 | 0.24677433273110874 |
+| ETHNICITY_CONSOLIDATED_BLACK OR AFRICAN AMERICAN    | -0.24360627899130383| 0.24360627899130383 |
+| POTASSIUM_MIN_VAL                                   | 0.22354275485744332 | 0.22354275485744332 |
+| ETHNICITY_CONSOLIDATED_HISPANIC OR LATINO           | 0.16890327194533392 | 0.16890327194533392 |
+| LOS_ICU_MEAN                                        | 0.1576491889366517  | 0.1576491889366517  |
+| CREATININE_MIN_VAL                                  | -0.1404407470985917 | 0.1404407470985917  |
+| WEIGHT_MEAN                                         | 0.139056926608819   | 0.139056926608819   |
+| INR_MIN_VAL                                         | 0.1371899462909558  | 0.1371899462909558  |
+
+![LR_Coeff](Report%20Figures/Plots/Feature_Coefficients_Logistic%20Regression.png)
+
+![CM_LR](Report%20Figures/Plots/Confusion_Matrix_Logistic%20Regression_Cross_Validated_Training.png)
+
+| Class         | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| 0             | 0.64      | 0.29   | 0.40     | 255     |
+| 1             | 0.77      | 0.93   | 0.85     | 656     |
+| **Accuracy**  |           |        | 0.76     | 911     |
+| **Macro Avg** | 0.70      | 0.61   | 0.62     | 911     |
+| **Weighted Avg** | 0.73   | 0.76   | 0.72     | 911     |
+
+
+### Random Forest
+![RF_ROC](Report%20Figures/Plots/ROC_Curve_Random%20Forest.png)
+Feature Importance Table:
+| Feature                                             | Importance          |
+|-----------------------------------------------------|---------------------|
+| LOS                                                 | 0.0751990622383627  |
+| OXYGEN_SAT_MEAN                                     | 0.05343446104510928 |
+| AGE_AT_ADMISSION                                    | 0.04336838087830143 |
+| SBP_MEAN                                            | 0.041516251625344364|
+| PLATELET_MIN_VAL                                    | 0.03997843273489437 |
+| HEARTRATE_MEAN                                      | 0.0395753096345336  |
+| TEMP_MIN_C                                          | 0.03936314414109013 |
+| WEIGHT_MEAN                                         | 0.03915667520754803 |
+| DBP_MEAN                                            | 0.03862787206256848 |
+| LOS_ICU_MEAN                                        | 0.03814046174282419 |
+| RR_MEAN                                             | 0.037662277725471434|
+| HEMOGLOBIN_MIN_VAL                                  | 0.035895643404254864|
+| TEMP_MAX_C                                          | 0.03564243164480918 |
+| BUN_MAX_VAL                                         | 0.035147285383892744|
+| MAP_MEAN                                            | 0.034835832439807125|
+
+![RF_ROC](Report%20Figures/Plots/Feature_Importances_Random%20Forest.png)
+![RF_ROC](Report%20Figures/Plots/Confusion_Matrix_Random%20Forest_Cross_Validated_Training.png)
+
+| Class         | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| 0             | 0.72      | 0.28   | 0.40     | 255     |
+| 1             | 0.77      | 0.96   | 0.86     | 656     |
+| **Accuracy**  |           |        | 0.77     | 911     |
+| **Macro Avg** | 0.75      | 0.62   | 0.63     | 911     |
+| **Weighted Avg** | 0.76   | 0.77   | 0.73     | 911     |
+
+### XGBoost
+
+Through `GridSearchCV()`, the best following XGBoost parameters were chosen: 
+```
+Best Parameters: {'colsample_bytree': 0.6, 'learning_rate': 0.05, 'max_depth': 5, 'n_estimators': 200, 'subsample': 0.8}
+```
+
+![XGBoost ROC](Report%20Figures/Plots/ROC_Curve_XGBoost.png)
+
+Feature Gain Table:
+| Feature                                             | Gain                | Normalized Gain     |
+|-----------------------------------------------------|---------------------|---------------------|
+| LOS                                                 | 11.8303804397583    | 0.07137593          |
+| ANIONGAP_MIN_VAL                                    | 8.511284828186035   | 0.05135092          |
+| AGE_AT_ADMISSION                                    | 6.546313762664795   | 0.03949571          |
+| OXYGEN_SAT_MEAN                                     | 6.159742832183838   | 0.03716342          |
+| ETHNICITY_CONSOLIDATED_ASIAN                        | 5.747664451599121   | 0.03467724          |
+| POTASSIUM_MIN_VAL                                   | 5.5271782875061035  | 0.03334698          |
+| INR_MIN_VAL                                         | 5.065011978149414   | 0.03055861          |
+| ETHNICITY_CONSOLIDATED_WHITE                        | 4.973119258880615   | 0.03000419          |
+| TEMP_MIN_C                                          | 4.901345729827881   | 0.02957116          |
+| SODIUM_MIN_VAL                                      | 4.747461318969727   | 0.02864274          |
+| ETHNICITY_CONSOLIDATED_HISPANIC OR LATINO           | 4.652392387390137   | 0.02806916          |
+| BUN_MIN_VAL                                         | 4.564362049102783   | 0.02753805          |
+| BUN_MAX_VAL                                         | 4.491528511047363   | 0.02709862          |
+| LACTATE_MIN_VAL                                     | 4.418938636779785   | 0.02666067          |
+| MAP_MEAN                                            | 4.241907596588135   | 0.02559259          |
+| CREATININE_MIN_VAL                                  | 4.1905012130737305  | 0.02528244          |
+
+![XGBoost Feature Gain](Report%20Figures/Plots/Feature_Importances_XGBoost.png)
+
+![XGBoost Confusion Matrix](Report%20Figures/Plots/Confusion_Matrix_XGBoost_Cross_Validated_Training.png)
+
+### Model Comparison
+
+Plotting the Average Precision and Receiver Operating Characteristic curves for all models onto a single graph, we have the following results:
+
+![AP Curve Comparison](Report%20Figures/Plots/Combined_ROC_Curves.png)
+
+![ROC Curve Comparison](Report%20Figures/Plots/Combined_Precision_Recall_Curves.png)
 
 ## Discussion
+Our developed models were unable to achieve the same Area Under the Curve (AUC) scores as those reported in the replicated paper. We have identified the key factors which may have contributed to this discrepancy:
+
+- **Different Definitions of 30-Day Mortality**: We used Admission Time and Date of Death to calculuate the `MORTALITY` Boolean, but the paper may have used a different definition, such as using Length of Stay. The paper did not state how this was defined.
+- **Outlier Handling Methods**: We used winsorization to handle outlier values, but the paper did not specify if or how these values were handled. 
+- **Incomplete Feature Extraction**: Not all features utilized in the replicated paper were successfully extracted from the dataset.
+
+Because the original paper did not provide the associated code, certain assumptions were made during replication. Crucially, the paper did not include a list of SQL queries or ITEM_IDs used for data extraction. Many ITEM_IDs correspond to a single feature, and without the exact ITEM_IDs used by the original study, our predictor variables were likely not the same.
+
+For instance, when attempting to extract urine output data using LAB ITEMS 51108 and 51109, over 80% of the entries were NULL. Urine output was a significant feature in the original paper, but we could not determine the exact method they used to extract this data. It is likely that the relevant data resides under different ITEM_IDs, which we were unable to identify. Such challenges likely contributed to the differences in our results.
+
+Despite these limitations, our XGBoost model still outperformed traditional models, aligning with the primary objective of the replicated paper.
+
 
 ## Conclusion
+In conclusion, the XGBoost model outperforms conventional logistic regression and random forest models. This replication confirms that the XGBoost model has the potential to be clinically beneficial, aiding healthcare professionals in providing precise management and treatment for patients with sepsis, which is crucial for enhancing the likelihood of patient survival.
+
 
 ## References
 - Hou, N., Li, M., He, L. et al. Predicting 30-days mortality for MIMIC-III patients with sepsis-3: a machine learning approach using XGboost. J Transl Med 18, 462 (2020). https://doi.org/10.1186/s12967-020-02620-5
