@@ -408,7 +408,7 @@ The data was standardized using `StandardScaler()`. The coefficient/feature impo
 ### Logistic Regression
 
 
-![LR_ROC](Report%20Figures/LR_ROC.png)
+![LR_ROC](Report%20Figures/Plots/ROC_Curve_Logistic%20Regression.png)
 
 | Feature                                             | Coefficient         | Abs Coefficient     |
 |-----------------------------------------------------|---------------------|---------------------|
@@ -428,9 +428,9 @@ The data was standardized using `StandardScaler()`. The coefficient/feature impo
 | WEIGHT_MEAN                                         | 0.139056926608819   | 0.139056926608819   |
 | INR_MIN_VAL                                         | 0.1371899462909558  | 0.1371899462909558  |
 
-![LR_Coeff](Report%20Figures/LR_Coeff.png)
+![LR_Coeff](Report%20Figures/Plots/Feature_Coefficients_Logistic%20Regression.png)
 
-![CM_LR](Report%20Figures/CM_LR.png)
+![CM_LR](Report%20Figures/Plots/Confusion_Matrix_Logistic%20Regression_Cross_Validated_Training.png)
 
 | Class         | Precision | Recall | F1-Score | Support |
 |---------------|-----------|--------|----------|---------|
@@ -442,7 +442,7 @@ The data was standardized using `StandardScaler()`. The coefficient/feature impo
 
 
 ### Random Forest
-
+![RF_ROC](Report%20Figures/Plots/ROC_Curve_Random%20Forest.png)
 Feature Importance Table:
 | Feature                                             | Importance          |
 |-----------------------------------------------------|---------------------|
@@ -462,12 +462,25 @@ Feature Importance Table:
 | BUN_MAX_VAL                                         | 0.035147285383892744|
 | MAP_MEAN                                            | 0.034835832439807125|
 
+![RF_ROC](Report%20Figures/Plots/Feature_Importances_Random%20Forest.png)
+![RF_ROC](Report%20Figures/Plots/Confusion_Matrix_Random%20Forest_Cross_Validated_Training.png)
+
+| Class         | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| 0             | 0.72      | 0.28   | 0.40     | 255     |
+| 1             | 0.77      | 0.96   | 0.86     | 656     |
+| **Accuracy**  |           |        | 0.77     | 911     |
+| **Macro Avg** | 0.75      | 0.62   | 0.63     | 911     |
+| **Weighted Avg** | 0.76   | 0.77   | 0.73     | 911     |
+
 ### XGBoost
 
 Through `GridSearchCV()`, the best following XGBoost parameters were chosen: 
 ```
 Best Parameters: {'colsample_bytree': 0.6, 'learning_rate': 0.05, 'max_depth': 5, 'n_estimators': 200, 'subsample': 0.8}
 ```
+
+![XGBoost ROC](Report%20Figures/Plots/ROC_Curve_XGBoost.png)
 
 Feature Gain Table:
 | Feature                                             | Gain                | Normalized Gain     |
@@ -489,17 +502,17 @@ Feature Gain Table:
 | MAP_MEAN                                            | 4.241907596588135   | 0.02559259          |
 | CREATININE_MIN_VAL                                  | 4.1905012130737305  | 0.02528244          |
 
-![XGBoost Confusion Matrix](Report%20Figures/CM_XGBoost.png)
+![XGBoost Feature Gain](Report%20Figures/Plots/Feature_Importances_XGBoost.png)
 
-![XGBoost Confusion Matrix](Report%20Figures/ROC_XGBoost.png)
+![XGBoost Confusion Matrix](Report%20Figures/Plots/Confusion_Matrix_XGBoost_Cross_Validated_Training.png)
 
 ### Model Comparison
 
 Plotting the Average Precision and Receiver Operating Characteristic curves for all models onto a single graph, we have the following results:
 
-![AP Curve Comparison](Report%20Figures/Model_AP_Curves.png)
+![AP Curve Comparison](Report%20Figures/Plots/Combined_ROC_Curves.png)
 
-![ROC Curve Comparison](Report%20Figures/Model_ROC_Curves.png)
+![ROC Curve Comparison](Report%20Figures/Plots/Combined_Precision_Recall_Curves.png)
 
 ## Discussion
 Our developed models were unable to achieve the same Area Under the Curve (AUC) scores as those reported in the replicated paper. We have identified the key factors which may have contributed to this discrepancy:

@@ -1,7 +1,20 @@
-import pandas as pd
-from scipy import stats
 import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from xgboost import XGBClassifier
+from sklearn.model_selection import cross_val_score, cross_val_predict, KFold, train_test_split
+from sklearn.metrics import (
+    confusion_matrix, classification_report, roc_auc_score, roc_curve,
+    precision_recall_curve, average_precision_score, auc
+)
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+import matplotlib.pyplot as plt
 from pathlib import Path
+from scipy import stats  # Added import for scipy.stats
+
+
 def mean_confidence_interval(data, confidence=0.95):
     """
     Calculate the mean and confidence interval for a list of numbers.
@@ -222,8 +235,303 @@ def compare_summary_stats(summary_before, summary_after, capped_summary):
     
     return comparison_table
 
-def save_dataframe(df, filename, base_dir):
-    file_path = base_dir / filename
-    df.to_csv(file_path, index=False)
-    print(f"{filename} saved successfully at: {file_path.resolve()}")
+def save_dataframe(df, filename, directory):
+    """
+    Saves a DataFrame to a specified directory with the given filename.
+
+    Parameters:
+    - df (pd.DataFrame): The DataFrame to save.
+    - filename (str): The name of the file (e.g., 'RandomForestImportance.csv').
+    - directory (Path): The directory path where the file will be saved.
+    """
+    filepath = directory / filename
+    df.to_csv(filepath, index=False)
+    print(f"DataFrame saved successfully at {filepath.resolve()}")
+
+# Define a function to save plots
+def save_plot(plot_path):
+    """
+    Saves the current matplotlib plot to the specified path.
+
+    Parameters:
+    - plot_path (Path): The full path (including filename) where the plot will be saved.
+    """
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    print(f"Plot saved successfully at {plot_path.resolve()}")
+  
+def evaluate_model(
+    model,
+    model_name,
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    color,
+    data_directory,
+    plot_directory,
+    kf
+):
+    """
+    Trains the model, performs cross-validation, plots and saves confusion matrix,
+    extracts and plots feature importances, and evaluates on the test set with plots saved.
+
+    Parameters:
+    - model: The machine learning model to evaluate.
+    - model_name (str): Name of the model.
+    - X_train (pd.DataFrame): Training features.
+    - y_train (pd.Series): Training labels.
+    - X_test (pd.DataFrame): Testing features.
+    - y_test (pd.Series): Testing labels.
+    - color (str): Color for the model's plots.
+    - data_directory (Path): Directory to save CSV files.
+    - plot_directory (Path): Directory to save plot PNGs.
+    - kf (KFold): Cross-validation strategy.
+
+    Returns:
+    - metrics (dict): Dictionary containing ROC and PR metrics.
+    """
+    print(f"\n--- Evaluating {model_name} ---")
     
+    # Cross-Validation
+    cv_scores = cross_val_score(model, X_train, y_train, cv=kf, scoring='accuracy')
+    print(f'{model_name} Cross-Validation Accuracy Scores: {cv_scores}')
+    print(f'{model_name} Average Cross-Validation Accuracy: {cv_scores.mean():.4f}')
+    
+    # Cross-Validated Predictions
+    y_pred_cv = cross_val_predict(model, X_train, y_train, cv=kf)
+    cm_cv = confusion_matrix(y_train, y_pred_cv)
+    
+    # Plot Confusion Matrix (Cross-Validated Training)
+    plt.figure(figsize=(8, 6))
+    if model_name == 'Random Forest':
+        cmap = 'Greens'
+    elif model_name == 'Logistic Regression':
+        cmap = 'Blues'
+    elif model_name == 'XGBoost':
+        cmap = 'Oranges'
+    else:
+        cmap = 'viridis'
+    
+    sns.heatmap(
+        cm_cv, annot=True, fmt='d', cmap=cmap,
+        xticklabels=['Did Not Survive', 'Survived'],
+        yticklabels=['Did Not Survive', 'Survived'],
+        cbar=False
+    )
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title(f'Confusion Matrix: {model_name} (Cross-Validated Training)')
+    
+    # Save Confusion Matrix Plot
+    cm_plot_path = plot_directory / f'Confusion_Matrix_{model_name}_Cross_Validated_Training.png'
+    save_plot(cm_plot_path)
+    plt.show()
+    plt.close()
+    
+    # Fit on Entire Training Data
+    model.fit(X_train, y_train)
+    
+    # Feature Importances or Coefficients
+    if hasattr(model, 'feature_importances_'):
+        importances = model.feature_importances_
+        feature_importances_df = pd.DataFrame({
+            'Feature': X_train.columns,
+            'Importance': importances
+        }).sort_values(by='Importance', ascending=False).head(15)
+        
+        # Save feature importances CSV
+        save_dataframe(feature_importances_df, f'{model_name}FeatureImportances.csv', data_directory)
+        
+        # Plot Feature Importances
+        plt.figure(figsize=(10, 8))
+        sns.barplot(
+            x='Importance',
+            y='Feature',
+            data=feature_importances_df,
+            palette=cmap
+        )
+        plt.title(f'Top 15 Feature Importances from {model_name}')
+        plt.xlabel('Importance Score')
+        plt.ylabel('Feature')
+        
+        # Save Feature Importances Plot
+        fi_plot_path = plot_directory / f'Feature_Importances_{model_name}.png'
+        save_plot(fi_plot_path)
+        plt.show()
+        plt.close()
+        
+    elif hasattr(model, 'coef_'):
+        coefficients = model.coef_[0]
+        coefficients_df = pd.DataFrame({
+            'Feature': X_train.columns,
+            'Coefficient': coefficients
+        }).assign(Abs_Coefficient=lambda df: df['Coefficient'].abs()).sort_values(by='Abs_Coefficient', ascending=False).head(15)
+        
+        # Save coefficients CSV
+        save_dataframe(coefficients_df, f'{model_name}Coefficients.csv', data_directory)
+        
+        # Plot Coefficients
+        plt.figure(figsize=(10, 8))
+        sns.barplot(
+            x='Coefficient',
+            y='Feature',
+            data=coefficients_df,
+            palette=cmap
+        )
+        plt.title(f'Top 15 Feature Coefficients from {model_name}')
+        plt.xlabel('Coefficient Value')
+        plt.ylabel('Feature')
+        
+        # Save Coefficients Plot
+        coef_plot_path = plot_directory / f'Feature_Coefficients_{model_name}.png'
+        save_plot(coef_plot_path)
+        plt.show()
+        plt.close()
+    
+    # Test Set Predictions
+    y_test_pred = model.predict(X_test)
+    if hasattr(model, 'predict_proba'):
+        y_test_prob = model.predict_proba(X_test)[:, 1]
+    else:
+        # Use decision function if predict_proba not available
+        y_test_prob = model.decision_function(X_test)
+    
+    # Classification Report
+    print(f"Classification Report - {model_name} (Test Set)")
+    print(classification_report(y_test, y_test_pred))
+    
+    # ROC-AUC
+    roc_auc = roc_auc_score(y_test, y_test_prob)
+    print(f'{model_name} ROC-AUC Score on Test Set: {roc_auc:.4f}')
+    
+    # Compute ROC Curve
+    fpr, tpr, _ = roc_curve(y_test, y_test_prob)
+    
+    # Plot ROC Curve
+    plt.figure(figsize=(8, 6))
+    plt.plot(
+        fpr, tpr,
+        label=f'{model_name} (AUC = {roc_auc:.4f})',
+        color=color,
+        lw=2
+    )
+    plt.plot([0, 1], [0, 1], 'k--', color='grey', lw=2)  # Diagonal line
+    plt.fill_between(fpr, tpr, alpha=0.3, color=color)  # Shade the area under the ROC curve
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate (Recall)')
+    plt.title(f'ROC Curve - {model_name}')
+    plt.legend(loc='lower right')
+    plt.grid(alpha=0.3)
+    
+    # Save ROC Curve Plot
+    roc_plot_path = plot_directory / f'ROC_Curve_{model_name}.png'
+    save_plot(roc_plot_path)
+    plt.show()
+    plt.close()
+    
+    # Precision-Recall Curve
+    precision, recall, _ = precision_recall_curve(y_test, y_test_prob)
+    average_precision = average_precision_score(y_test, y_test_prob)
+    
+    # Plot Precision-Recall Curve
+    plt.figure(figsize=(8, 6))
+    plt.plot(
+        recall, precision,
+        color=color,
+        lw=2,
+        label=f'PR curve (AP = {average_precision:.4f})'
+    )
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title(f'Precision-Recall (PR) Curve - {model_name}')
+    plt.legend(loc="lower left")
+    plt.grid(alpha=0.3)
+    
+    # Save Precision-Recall Curve Plot
+    pr_plot_path = plot_directory / f'Precision_Recall_Curve_{model_name}.png'
+    save_plot(pr_plot_path)
+    plt.show()
+    plt.close()
+    
+    # Collect Metrics for Combined Plotting
+    metrics = {
+        'fpr': fpr,
+        'tpr': tpr,
+        'roc_auc': roc_auc,
+        'precision': precision,
+        'recall': recall,
+        'average_precision': average_precision
+    }
+    
+    return metrics
+
+def plot_combined_roc(model_metrics, plot_directory, model_colors):
+    """
+    Plots ROC curves for all models on a single plot.
+
+    Parameters:
+    - model_metrics (dict): Dictionary containing ROC metrics for each model.
+    - plot_directory (Path): Directory to save the combined ROC plot.
+    - model_colors (dict): Dictionary mapping model names to colors.
+    """
+    plt.figure(figsize=(10, 8))
+    
+    for model_name, metrics in model_metrics.items():
+        plt.plot(
+            metrics['fpr'],
+            metrics['tpr'],
+            label=f"{model_name} (AUC = {metrics['roc_auc']:.4f})",
+            lw=2,
+            color=model_colors[model_name]
+        )
+    
+    # Diagonal line for random guessing
+    plt.plot([0, 1], [0, 1], 'k--', color='grey', lw=2)
+    
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate (Recall)')
+    plt.title('ROC Curves Comparison')
+    plt.legend(loc='lower right')
+    plt.grid(alpha=0.3)
+    
+    # Save Combined ROC Plot
+    combined_roc_path = plot_directory / 'Combined_ROC_Curves.png'
+    save_plot(combined_roc_path)
+    plt.show()
+    plt.close()
+    
+    print(f"Combined ROC Curves plot saved at {combined_roc_path.resolve()}")
+
+def plot_combined_pr(model_metrics, plot_directory, model_colors):
+    """
+    Plots Precision-Recall curves for all models on a single plot.
+
+    Parameters:
+    - model_metrics (dict): Dictionary containing PR metrics for each model.
+    - plot_directory (Path): Directory to save the combined PR plot.
+    - model_colors (dict): Dictionary mapping model names to colors.
+    """
+    plt.figure(figsize=(10, 8))
+    
+    for model_name, metrics in model_metrics.items():
+        plt.plot(
+            metrics['recall'],
+            metrics['precision'],
+            label=f"{model_name} (AP = {metrics['average_precision']:.4f})",
+            lw=2,
+            color=model_colors[model_name]
+        )
+    
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall (PR) Curves Comparison')
+    plt.legend(loc='lower left')
+    plt.grid(alpha=0.3)
+    plt.show()
+    # Save Combined PR Plot
+    combined_pr_path = plot_directory / 'Combined_Precision_Recall_Curves.png'
+    save_plot(combined_pr_path)
+    
+    plt.close()
+    
+    print(f"Combined Precision-Recall Curves plot saved at {combined_pr_path.resolve()}")
