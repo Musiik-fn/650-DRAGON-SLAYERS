@@ -407,7 +407,9 @@ The data was standardized using `StandardScaler()`. The coefficient/feature impo
 
 ### Logistic Regression
 
-Feature Coefficient Table:
+
+![LR_ROC](Report%20Figures/LR_ROC.png)
+
 | Feature                                             | Coefficient         | Abs Coefficient     |
 |-----------------------------------------------------|---------------------|---------------------|
 | LOS                                                 | -0.4932606042579501 | 0.4932606042579501  |
@@ -426,6 +428,17 @@ Feature Coefficient Table:
 | WEIGHT_MEAN                                         | 0.139056926608819   | 0.139056926608819   |
 | INR_MIN_VAL                                         | 0.1371899462909558  | 0.1371899462909558  |
 
+![LR_Coeff](Report%20Figures/LR_Coeff.png)
+
+![CM_LR](Report%20Figures/CM_LR.png)
+
+| Class         | Precision | Recall | F1-Score | Support |
+|---------------|-----------|--------|----------|---------|
+| 0             | 0.64      | 0.29   | 0.40     | 255     |
+| 1             | 0.77      | 0.93   | 0.85     | 656     |
+| **Accuracy**  |           |        | 0.76     | 911     |
+| **Macro Avg** | 0.70      | 0.61   | 0.62     | 911     |
+| **Weighted Avg** | 0.73   | 0.76   | 0.72     | 911     |
 
 
 ### Random Forest
