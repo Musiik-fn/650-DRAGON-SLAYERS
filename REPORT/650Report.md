@@ -37,6 +37,7 @@ Table of Contents:
     - [Random Forest](#random-forest)
     - [XGBoost](#xgboost-1)
     - [Model Comparison](#model-comparison)
+      - [Selected Features](#selected-features)
   - [Discussion](#discussion)
   - [Conclusion](#conclusion)
   - [References](#references)
@@ -79,6 +80,8 @@ Validating and potentially enhancing predictive models for sepsis outcomes can a
 
 ## Methodology
 
+The primary code used in this project can be found in the directory `FILES > Code`.
+
 ### Database Interfacing
 
 Similar to the source paper, we used the Medical Information Mart for Intensive Care III database version 1.4 ([MIMIC III v1.4](https://doi.org/10.1038/sdata.2016.35)) for the study. MIMIC-III, a publicly available single-center critical care database which was approved by the Institutional Review Boards of Beth Israel Deaconess Medical Center (BIDMC, Boston, MA, USA) and the Massachusetts Institute of Technology (MIT, Cambridge, MA, USA), includes information on 46,520 patients who were admitted to various ICUs of BIDMC in Boston, Massachusetts from 2001 to 2012. The data was accessed via the Google BigQuery cloud platform and subsequently extracted and processed using SQL and Python. Additionally, the models were developed and evaluated in Python. This approach contrasts with the target paper, which primarily utilized R for these tasks.
@@ -94,7 +97,7 @@ We first extracted the given admission and patient data of all patients who were
 
 ![Patient Cohort Image](Report%20Figures/Data%20Preprocessing%20Figure(1).png)
 
-All SQL statements used can be found in the file `Data_Extraction.sql`.
+All SQL statements used can be found in the file `Data_Extraction.sql`. The related Python code can be found in the file `650DataExtract.ipynb`.
 
 ### Patient Selection Criteria and Query
 
@@ -402,8 +405,12 @@ For the categorical features, a chi-squared test was applied and the following r
 
 The chi-squared analysis reveals that ethnicity and admission type are is significantly associated with 30-day mortality in sepsis patients, while gender is not.
 
+
+
+
+
 ## Model Results
-The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder.
+The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder. The code related to model development can be found in the file `650Models.ipynb`. This notebook utilizes many custom functions defined in the library file `dragonFunctions.py`.
 
 ### Logistic Regression
 
@@ -513,6 +520,12 @@ Plotting the Average Precision and Receiver Operating Characteristic curves for 
 ![AP Curve Comparison](Report%20Figures/Plots/Combined_ROC_Curves.png)
 
 ![ROC Curve Comparison](Report%20Figures/Plots/Combined_Precision_Recall_Curves.png)
+
+XGBoost attains the highest values for both AUC and AP, and is therefore the most optimal model given the dataset. 
+
+#### Selected Features
+Amongst all models, the baseline features of AGE and LOS (Length of Stay) were significant features. In terms of the vitals and laboratory signs, OXYGEN_SAT_MEAN stands out as the most important vital sign, consistently appearing as a top predictor. Other vital signs and lab values such as BUN levels, POTASSIUM_MIN_VAL, INR_MIN_VAL, CREATININE_MIN_VAL, TEMP_MIN_C, MAP_MEAN, and WEIGHT_MEAN are also significant in multiple models, reinforcing their relevance in predicting patient outcomes.
+
 
 ## Discussion
 Our developed models were unable to achieve the same Area Under the Curve (AUC) scores as those reported in the replicated paper. We have identified the key factors which may have contributed to this discrepancy:
