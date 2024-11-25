@@ -1,4 +1,4 @@
-To view the report and documentation, please use the repository wiki: https://github.com/Musiik-fn/650-DRAGON-SLAYERS/wiki
+To view the report and documentation, please use the [repository wiki](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/wiki)
 
 # BANA 650 PROJECT
 
