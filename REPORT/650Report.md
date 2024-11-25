@@ -353,8 +353,6 @@ def preprocess_outliers(df, threshold=3):
 
 ## Exploratory Data Analysis
 
-This section includes the exploratory data analysis
-
 ### Patient Cohort
 
 After all filtering, our final cohort contains 1274 patients who died within 30 days and 3281 patients who survived within 30 days. 
