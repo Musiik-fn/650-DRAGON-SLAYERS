@@ -233,7 +233,14 @@ def compare_summary_stats(summary_before, summary_after, capped_summary):
         'Capped_Lower', 'Capped_Upper', 'Total_Capped', 'Percent_Capped'
     ]]
     
+    # Reset the index to turn the feature names into a column
+    comparison_table.reset_index(inplace=True)
+    
+    # Rename the 'index' column to 'Feature'
+    comparison_table.rename(columns={'index': 'Feature'}, inplace=True)
+    
     return comparison_table
+
 
 def save_dataframe(df, filename, directory):
     """
