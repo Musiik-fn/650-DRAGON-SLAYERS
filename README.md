@@ -5,7 +5,7 @@ To view the report and documentation, please use the [repository wiki](https://g
 **Group Members:** Joshua Cabal, Ida Karimi, Viridiana Radillo
 
 ## Overview
- The objective is to reproduce experiments in a published paper. We only allow group projects (max 3 students in each group). No individual student submission. You are responsible for forming groups. The successful resulting project can potentially lead to research publication at health informatics venues such as AMIA, JAMIA, and JBI.
+ The objective is to reproduce experiments in a published paper. The successful resulting project can potentially lead to research publication at health informatics venues such as AMIA, JAMIA, and JBI.
 
 ## Chosen Research Paper
 **Research Paper Name**: Predicting 30‑days mortality for MIMIC‑III patients with sepsis‑3: a machine learning
