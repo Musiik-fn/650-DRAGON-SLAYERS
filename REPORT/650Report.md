@@ -41,7 +41,6 @@ Table of Contents:
   - [Conclusion](#conclusion)
     - [Replication of Selected Paper](#replication-of-selected-paper)
     - [Key Findings and Healthcare Implications](#key-findings-and-healthcare-implications)
-  - [Conclusion](#conclusion-1)
   - [Lessons Learned](#lessons-learned)
   - [References](#references)
 
@@ -547,6 +546,8 @@ Amongst all models, the baseline features of AGE and LOS (Length of Stay) were s
 
 ## Conclusion
 
+In conclusion, the XGBoost model outperforms conventional logistic regression and random forest models. This replication confirms that the XGBoost model has the potential to be clinically beneficial, aiding healthcare professionals in providing precise management and treatment for patients with sepsis, which is crucial for enhancing the likelihood of patient survival.
+
 ### Replication of Selected Paper
 Our developed models were unable to achieve the same Area Under the Curve (AUC) scores as those reported in the replicated paper. We have identified the key factors which may have contributed to this discrepancy:
 
@@ -566,9 +567,6 @@ Our replication demonstrated that the XGBoost machine learning model outperforms
 
 The healthcare implications of these findings are significant. Implementing the XGBoost model in clinical settings can improve risk stratification, enabling healthcare providers to identify high-risk sepsis patients more accurately and allocate resources more effectively. This leads to better patient triage and timely interventions, potentially reducing mortality rates and enhancing patient outcomes. Moreover, the identification of critical predictors highlights areas for targeted clinical monitoring and intervention, addressing underlying factors that contribute to sepsis mortality. By integrating such advanced predictive models into Clinical Decision Support Systems (CDSS), hospitals can enhance decision-making processes, ensure equitable care across diverse patient populations, and ultimately contribute to more efficient and effective sepsis management protocols.
 
-
-## Conclusion
-In conclusion, the XGBoost model outperforms conventional logistic regression and random forest models. This replication confirms that the XGBoost model has the potential to be clinically beneficial, aiding healthcare professionals in providing precise management and treatment for patients with sepsis, which is crucial for enhancing the likelihood of patient survival.
 
 ## Lessons Learned
 
