@@ -13,7 +13,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy import stats  # Added import for scipy.stats
-
+from typing import List, Tuple
+from sklearn.base import BaseEstimator
 
 def mean_confidence_interval(data, confidence=0.95):
     """
@@ -542,3 +543,170 @@ def plot_combined_pr(model_metrics, plot_directory, model_colors):
     plt.close()
     
     print(f"Combined Precision-Recall Curves plot saved at {combined_pr_path.resolve()}")
+
+def clinical_impact_curve(
+    probabilities: np.ndarray, 
+    outcomes: np.ndarray, 
+    thresholds: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute the number of high-risk patients and true positives at each threshold.
+
+    Parameters:
+    ----------
+    probabilities : np.ndarray
+        Predicted probabilities for the positive class.
+    outcomes : np.ndarray
+        True binary outcomes.
+    thresholds : np.ndarray
+        Array of threshold values.
+
+    Returns:
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        high_risk: Number of high-risk patients at each threshold.
+        true_positives: Number of true positives at each threshold.
+    """
+    high_risk = (probabilities[:, None] >= thresholds).sum(axis=0)
+    true_positives = ((probabilities[:, None] >= thresholds) & (outcomes[:, None] == 1)).sum(axis=0)
+    return high_risk, true_positives
+
+def bootstrap_confidence_intervals(
+    probabilities: np.ndarray, 
+    outcomes: np.ndarray, 
+    thresholds: np.ndarray, 
+    n_bootstraps: int = 1000, 
+    ci: float = 95
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute bootstrap confidence intervals for high-risk and true positive counts.
+
+    Parameters:
+    ----------
+    probabilities : np.ndarray
+        Predicted probabilities for the positive class.
+    outcomes : np.ndarray
+        True binary outcomes.
+    thresholds : np.ndarray
+        Array of threshold values.
+    n_bootstraps : int, optional
+        Number of bootstrap samples, by default 1000.
+    ci : float, optional
+        Confidence interval percentage, by default 95.
+
+    Returns:
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        high_risk_lower, high_risk_upper, true_positive_lower, true_positive_upper
+    """
+    rng = np.random.default_rng()
+    high_risk_boot = np.empty((n_bootstraps, len(thresholds)), dtype=int)
+    true_pos_boot = np.empty((n_bootstraps, len(thresholds)), dtype=int)
+
+    for i in range(n_bootstraps):
+        indices = rng.integers(0, len(probabilities), len(probabilities))
+        prob_sample = probabilities[indices]
+        outcome_sample = outcomes[indices]
+        hr, tp = clinical_impact_curve(prob_sample, outcome_sample, thresholds)
+        high_risk_boot[i, :] = hr
+        true_pos_boot[i, :] = tp
+
+    lower_percentile = (100 - ci) / 2
+    upper_percentile = 100 - lower_percentile
+
+    high_risk_lower = np.percentile(high_risk_boot, lower_percentile, axis=0)
+    high_risk_upper = np.percentile(high_risk_boot, upper_percentile, axis=0)
+    true_positive_lower = np.percentile(true_pos_boot, lower_percentile, axis=0)
+    true_positive_upper = np.percentile(true_pos_boot, upper_percentile, axis=0)
+
+    return high_risk_lower, high_risk_upper, true_positive_lower, true_positive_upper
+
+
+def plot_clinical_impact_curve(
+    model: BaseEstimator, 
+    X_test: pd.DataFrame, 
+    y_test: pd.Series, 
+    n_bootstraps: int = 1000, 
+    ci: float = 95
+) -> None:
+    """
+    Plot the clinical impact curve for a given model and test data, including 95% confidence intervals.
+
+    Parameters:
+    ----------
+    model : BaseEstimator
+        Trained machine learning model with `predict_proba` method.
+    X_test : pd.DataFrame
+        Test data.
+    y_test : pd.Series or np.ndarray
+        True binary outcomes for the test data.
+    n_bootstraps : int, optional
+        Number of bootstrap samples for CI estimation, by default 1000.
+    ci : float, optional
+        Confidence interval percentage, by default 95.
+    """
+    if not hasattr(model, 'predict_proba'):
+        raise ValueError("The model does not have a `predict_proba` method.")
+
+    thresholds = np.linspace(0.0, 1.0, 100)
+    probabilities = model.predict_proba(X_test)[:, 1]
+    outcomes = np.array(y_test)
+
+    # Calculate point estimates
+    high_risk, true_positives = clinical_impact_curve(probabilities, outcomes, thresholds)
+
+    # Calculate confidence intervals via bootstrapping
+    high_risk_lower, high_risk_upper, true_positive_lower, true_positive_upper = bootstrap_confidence_intervals(
+        probabilities, outcomes, thresholds, n_bootstraps=n_bootstraps, ci=ci
+    )
+
+    # Plotting the clinical impact curve
+    plt.figure(figsize=(10, 6))
+    
+    # High-risk patients
+    plt.plot(thresholds, high_risk, label='Number High Risk', color='red', linestyle='--')
+    plt.fill_between(thresholds, high_risk_lower, high_risk_upper, color='red', alpha=0.2, label=f'{ci}% CI High Risk')
+    
+    # True positives
+    plt.plot(thresholds, true_positives, label='Number of True Positives', color='blue', linestyle='-')
+    plt.fill_between(thresholds, true_positive_lower, true_positive_upper, color='blue', alpha=0.2, label=f'{ci}% CI True Positives')
+    
+    plt.xlabel('Threshold Probability')
+    plt.ylabel('Number of Patients')
+    plt.title('Clinical Impact Curve')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+from sklearn.calibration import calibration_curve
+
+def plot_calibration_curve(model, X_test, y_test, model_name):
+    """
+    Plots the calibration curve for a given model.
+    
+    Parameters:
+    - model: Trained model with predict_proba method.
+    - X_test: Test features.
+    - y_test: Test labels.
+    - model_name: Name of the model.
+    - plot_directory: Directory to save the plot.
+    """
+    if not hasattr(model, 'predict_proba'):
+        raise ValueError("Model does not have predict_proba method.")
+    
+    # Get predicted probabilities
+    prob_pos = model.predict_proba(X_test)[:, 1]
+    
+    # Compute calibration curve
+    fraction_of_positives, mean_predicted_value = calibration_curve(y_test, prob_pos, n_bins=10)
+    
+    # Plot calibration curve
+    plt.figure(figsize=(8, 6))
+    plt.plot(mean_predicted_value, fraction_of_positives, "s-", label=model_name)
+    plt.plot([0, 1], [0, 1], "k--", label="Perfectly calibrated")
+    plt.xlabel("Mean Predicted Probability")
+    plt.ylabel("Fraction of Positives")
+    plt.title(f"Calibration Curve - {model_name}")
+    plt.legend()
+    plt.grid(alpha=0.3)
