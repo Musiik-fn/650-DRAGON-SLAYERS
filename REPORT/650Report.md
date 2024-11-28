@@ -84,7 +84,7 @@ Validating and potentially enhancing predictive models for sepsis outcomes can a
 
 ## Methodology
 
-The primary code used in this project can be found in the directory `FILES > Code`.
+The primary code used in this project can be found in the directory [FILES > Code](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/tree/main/FILES/Code).
 
 ### Database Interfacing
 
@@ -96,8 +96,6 @@ Similar to the source paper, we used the Medical Information Mart for Intensive 
 We first extracted the given admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. After this, the data transformation steps included handling inconsistencies, missing values, outliers, and categorical feature encoding. Finally, the 30 day mortality column is defined.
 
 ![Patient Cohort Image](Report%20Figures/Data%20Preprocessing%20Figure(1).png)
-
-All SQL statements used can be found in the file `Data_Extraction.sql`. The related Python code can be found in the file `650DataExtract.ipynb`.
 
 ### Patient Selection Criteria and Query
 
@@ -111,34 +109,12 @@ The following criteria were used in the selection of the patient records:
 - Patient must have related lab test results
 - Patient must have no more than 20% of data missing
 
-Below is our baseline patient query. The criteria mentioned above were applied after the dataframe merge was completed.
-```SQL
-SELECT DISTINCT
-    p.SUBJECT_ID,
-    p.GENDER,
-    p.DOB,
-    p.DOD,
-    p.EXPIRE_FLAG,
-    a.HADM_ID,
-    a.ADMITTIME,
-    a.DISCHTIME,
-    a.ADMISSION_TYPE,
-    DATE_DIFF(DATE(a.ADMITTIME), DATE(p.DOB), YEAR) AS AGE_AT_ADMISSION
-FROM
-    physionet-data.mimiciii_clinical.patients p
-JOIN
-    physionet-data.mimiciii_clinical.diagnoses_icd d
-    ON p.SUBJECT_ID = d.SUBJECT_ID
-JOIN
-    physionet-data.mimiciii_clinical.admissions a
-    ON d.HADM_ID = a.HADM_ID
-WHERE
-    d.ICD9_CODE IN ('99591', '99592');
-```
+The baseline patient query can be found in the file [Data_Extraction.sql](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/Data_Extraction.sql). The criteria mentioned above were applied after the dataframe merge was completed.
+
 
 ### Feature Selection
 
-The features were divided into the following categories: **baseline variables, vital signs, and laboratory parameters**. The variables were chosen directly from the paper. For the variables that were captured periodically, such as heart rate, they were aggregated and incorporated into the model using **min**, **mean**, and **maximum values**. 
+The features were divided into the following categories: **baseline variables, vital signs, and laboratory parameters**. The variables were chosen directly from the paper which selected the features based on clinical significance and availability by stepwise analysis between the groups. For the variables that were captured periodically, such as heart rate, they were aggregated and incorporated into the model using **min**, **mean**, and **maximum values**. 
 
 
 | Feature Type          | Feature                          | Source Table | Item ID                                                         |
@@ -178,21 +154,7 @@ The features were divided into the following categories: **baseline variables, v
 
 ### Data Aggregation
 
-Because many of the features are captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean.
-
-Below is the heart rate query which was used. All queries which needed aggregation followed this essential format. 
-```SQL
-SELECT C.SUBJECT_ID,ITEM.LABEL, AVG(C.VALUENUM) AS HEARTRATE
-FROM `physionet-data.mimiciii_clinical.chartevents` AS C
-
-INNER JOIN `physionet-data.mimiciii_clinical.diagnoses_icd` AS D ON D.SUBJECT_ID = C.SUBJECT_ID
-JOIN `physionet-data.mimiciii_clinical.d_items` AS ITEM ON ITEM.ITEMID = C.ITEMID
-WHERE D.ICD9_CODE IN ('99591', '99592') AND (C.ITEMID  IN (211, 220045))
-
-GROUP BY C.SUBJECT_ID, ITEM.LABEL
-ORDER BY C.SUBJECT_ID ASC
-```
-A query was written to extract each feature listed in the feature table, and then the results were merged on the sepsis patient table on the `SUBJECT_ID`. 
+Because many of the features are captured periodically, such as vital signs and lab events, these features are incorporated using their minimum, maximum, and mean. A query was written to extract each feature listed in the feature table, and then the results were merged on the sepsis patient table on the `SUBJECT_ID`. All SQL statements can be found in the file [Data_Extraction.sql](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/Data_Extraction.sql). 
 
 ### Data Preprocessing
 
@@ -201,14 +163,6 @@ The sepsis patients were divided into two groups based on their 30 day mortality
 1. `MORTALITY = 0`: Died within 30 days
 2. `MORTALITY = 1`: Survived within 30 days
 
-```python
-patient_df['DOD'] = pd.to_datetime(patient_df['DOD'])
-patient_df['ADMITTIME'] = pd.to_datetime(patient_df['ADMITTIME'])
-
-# define 30-days mortality column 
-patient_df['DIFF_DAYS'] = (patient_df['DOD'] - patient_df['ADMITTIME']).dt.days
-patient_df['MORTALITY'] = patient_df['DIFF_DAYS'].apply(lambda x: 0 if x>30 else 1)
-```
 
 The statistics related to this will be provided in the exploratory data analysis section of this paper. 
 
@@ -294,27 +248,9 @@ Mean value imputation was used to fill all `null` values.
 
 #### Handling Outliers
 
-The outliers were handled using [winsorization](https://www.sciencedirect.com/science/article/abs/pii/B9780123848642000287). Instead of deleting outliers, and thereby losing degrees of freedom, Charles P. Winsor devised the strategy of replacing extreme data by duplicating values of less extreme data in the sample. Winsor’s approach was to replace an outlier with the next datum closer to the mean.  
+The outliers were handled using [winsorization](https://www.sciencedirect.com/science/article/abs/pii/B9780123848642000287).  Through this method, extreme values were limited to a chosen distance of 3 standard deviations from the mean. The function which handled this is, `preprocess_outliers()`, defined in the file [dragonFunctions.py](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/dragonFunctions.py). The function also tracks statsitcs of the variables before and after the operation. The results are contained in the file named [Outlier_Report.csv](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Data/Outlier_Report.csv).
 
-Through this method, extreme values were limited to a chosen distance of 3 standard deviations from the mean. The function which handled this is defined in the file `dragonFunctions.py`. The function also tracks statsitcs of the variables before and after the operation. The results are contained in the file named `Outlier_Report.csv`. Below is the docstring of the function and a portion of the outlier report. 
 
-```python
-def preprocess_outliers(df, threshold=3):
-    """
-    Detects and caps outliers in non-binary numerical columns of the DataFrame.
-    
-    Parameters:
-    - df (pd.DataFrame): The input DataFrame.
-    - threshold (float): Number of standard deviations to define outliers (default is 3).
-    
-    Returns:
-    - df_capped (pd.DataFrame): DataFrame with outliers capped.
-    - summary_before (pd.DataFrame): Summary statistics before capping.
-    - summary_after (pd.DataFrame): Summary statistics after capping.
-    - capped_summary (pd.DataFrame): Count and percentage of capped values per column.
-    - binary_numerical_cols (list): List of binary numerical columns.
-    """
-```
 | Feature Name        | Mean Before | Mean After | Mean % Change   | Capped_Lower | Capped_Upper | Total_Capped | Percent_Capped |
 |---------------------|-------------|------------|-----------------|--------------|--------------|--------------|-----------------|
 | LOS                 | 14.48222566 | 13.4672812 | -7.008207746    | 0            | 201          | 201          | 3.88            |
@@ -406,7 +342,7 @@ Below are the distributions of the features with the lowest p-values.
 ![EDA](Report%20Figures/EDA%20Visuals/POTASSIUM_MIN.png)
 ![EDA](Report%20Figures/EDA%20Visuals/SODIUM_MIN.png)
 
-All histograms and box plots can be found in `FILES > Code > 650EDA.ipynb`
+All histograms and box plots can be found in [FILES > Code > 650EDA.ipynb](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/650EDA.ipynb)
 
 For the categorical features, a chi-squared test was applied and the following results were given: 
 | Variable  | Chi-squared Statistic     | P-value                | Degrees of Freedom |
@@ -415,13 +351,11 @@ For the categorical features, a chi-squared test was applied and the following r
 | GENDER    | 1.4287106646326184        | 0.23197497397598826    | 1                  |
 | ADMISSION_TYPE | 8.743278584659594       | 0.012630518475803666    | 2                  |
 
-The chi-squared analysis reveals that ethnicity and admission type are is significantly associated with 30-day mortality in sepsis patients, while gender is not.
-
-
+The chi-squared analysis reveals that ethnicity and admission type are significantly associated with 30-day mortality in sepsis patients, while gender is not.
 
 
 ### Predictive Models
-The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder. The code related to model development can be found in the file `650Models.ipynb`. This notebook utilizes many custom functions defined in the library file `dragonFunctions.py`.
+The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder. The code related to model development can be found in the file [650Models.ipynb](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/650Models.ipynb). This notebook utilizes many custom functions defined in the library file [dragonFunctions.py](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/dragonFunctions.py).
 
 #### Logistic Regression
 
@@ -572,8 +506,8 @@ The healthcare implications of these findings are significant. Implementing the 
 
 As a team, we collectively leaned the following lessons:
 
-- **Database Initialization**: We learned to initialize and manage databases both locally and on the cloud. We learned this through following the great MIMIC-III documentation and also learned about the trade offs between each choice. We believe working with the cloud instance was the best route given the project requirements. 
-- **Secure Data Connections**: Established secure connections to cloud instances and imported data directly into notebooks. We adhered to best practices for securely transferring data, initializing application default credentials, and configuring our workflows to prevent exposure of sensitive information, such as keys, secrets, or passwords.
+- **Database Initialization**: We learned to initialize and work with databases both locally and on the cloud. We learned this through following the great MIMIC-III documentation and also learned about the trade offs between each choice. We believe working with the cloud instance was the best route given the project requirements. 
+- **Secure Data Connections**: Established secure connections to cloud instances and imported data directly into notebooks. We adhered to best practices for securely transferring data, initializing application default credentials, and configuring our workflows to prevent exposure of sensitive information such as keys, secrets, or passwords.
 - **Reproducibility in Research**: As a group, we emphasized the importance of verifying the findings of the selected research papers. By working together to replicate methodologies as accurately as possible, we highlighted the need for open-sourced code to improve transparency, visibility, and peer review in rigorous medical research.
 - **Project Management and Accountability**: We developed effective strategies for managing tasks, assigning responsibilities, and ensuring accountability given our working schedules. Our collaboration strengthened our ability to track progress and meet project objectives efficiently.
 - **Learning New Tools**: Each of us explored the evaluation metrics used in the target paper, such as average precision through precision-recall curves and clinical impact curves.
@@ -586,4 +520,3 @@ As a team, we collectively leaned the following lessons:
 - https://www.who.int/news-room/fact-sheets/detail/sepsis
 - Duncan, C. F., Youngstein, T., Kirrane, M. D., & Lonsdale, D. O. (2021). Diagnostic Challenges in Sepsis. Current infectious disease reports, 23(12), 22. https://doi.org/10.1007/s11908-021-00765-y
 - R.H. Riffenburgh, Chapter 28 - Methods You Might Meet, But Not Every Day, Editor(s): R.H. Riffenburgh, Statistics in Medicine (Third Edition), Academic Press, 2012, Pages 581-591, ISBN 9780123848642, https://doi.org/10.1016/B978-0-12-384864-2.00028-7. (https://www.sciencedirect.com/science/article/pii/B9780123848642000287)
-
