@@ -10,7 +10,7 @@ December 4, 2024
 
 Table of Contents:
 - [650 Project - Predicting 30‑days mortality for MIMIC‑III patients with sepsis‑3](#650-project---predicting-30days-mortality-for-mimiciii-patients-with-sepsis3)
-  - [Executive Sumamry](#executive-sumamry)
+  - [Abstract](#abstract)
   - [Introduction](#introduction)
     - [Background](#background)
     - [Challenges in Predicting Sepsis Outcomes](#challenges-in-predicting-sepsis-outcomes)
@@ -19,38 +19,43 @@ Table of Contents:
     - [Significance](#significance)
   - [Methodology](#methodology)
     - [Database Interfacing](#database-interfacing)
-    - [XGBoost](#xgboost)
-  - [Data Extraction](#data-extraction)
+    - [Data Extraction](#data-extraction)
     - [Patient Selection Criteria and Query](#patient-selection-criteria-and-query)
     - [Feature Selection](#feature-selection)
     - [Data Aggregation](#data-aggregation)
-  - [Data Preprocessing](#data-preprocessing)
-    - [Defining Outcome Variable: 30-Day Mortality](#defining-outcome-variable-30-day-mortality)
-    - [Categorical Feature Encoding](#categorical-feature-encoding)
-    - [Handling `NULL` Values](#handling-null-values)
-    - [Handling Outliers](#handling-outliers)
-  - [Exploratory Data Analysis](#exploratory-data-analysis)
-    - [Patient Cohort](#patient-cohort)
-    - [Feature Statistics](#feature-statistics)
-  - [Model Results](#model-results)
-    - [Logistic Regression](#logistic-regression)
-    - [Random Forest](#random-forest)
-    - [XGBoost](#xgboost-1)
+    - [Data Preprocessing](#data-preprocessing)
+      - [Defining Outcome Variable: 30-Day Mortality](#defining-outcome-variable-30-day-mortality)
+      - [Categorical Feature Encoding](#categorical-feature-encoding)
+      - [Handling `NULL` Values](#handling-null-values)
+      - [Handling Outliers](#handling-outliers)
+  - [Results](#results)
+    - [Exploratory Data Analysis](#exploratory-data-analysis)
+      - [Patient Cohort](#patient-cohort)
+      - [Feature Statistics](#feature-statistics)
+    - [Predictive Models](#predictive-models)
+      - [Logistic Regression](#logistic-regression)
+      - [Random Forest](#random-forest)
+      - [XGBoost](#xgboost)
     - [Model Comparison](#model-comparison)
       - [Selected Features](#selected-features)
-  - [Discussion](#discussion)
   - [Conclusion](#conclusion)
+    - [Replication of Selected Paper](#replication-of-selected-paper)
+    - [Key Findings and Healthcare Implications](#key-findings-and-healthcare-implications)
+  - [Conclusion](#conclusion-1)
+  - [Lessons Learned](#lessons-learned)
   - [References](#references)
 
 ---
 
-## Executive Sumamry
+## Abstract
 
-Sepsis is a critical global health issue with high mortality rates, particularly among ICU patients. Early prediction of sepsis outcomes is essential for improving patient care and survival rates. This report replicates the study by [Hou et al. (2020)](https://doi.org/10.1186/s12967-020-02620-5), aiming to **develop a predictive model for 30-day mortality in sepsis-3 patients** using the MIMIC-III database.
+**Background**: Sepsis is a significant cause of in-hospital mortality, particularly among ICU patients. Early prediction of sepsis is essential, as prompt and appropriate treatment can improve survival outcomes. Machine learning methods are flexible prediction algorithms with potential advantages over conventional regression and scoring systems. The aim of this study were to replicate and validate the findings performed by [Hou et al. (2020)](https://doi.org/10.1186/s12967-020-02620-5), which found that XGBoost performed better than traditional predictive models.
 
-Using machine learning techniques, specifically the XGBoost algorithm, we constructed a predictive model and compared its performance with traditional models such as random forests and logistic regression. Our findings indicate that the XGBoost model outperforms the conventional models, demonstrating higher accuracy and better predictive capabilities.
+**Methods**: Using the MIMIC-III v1.4 database, we identified patients with sepsis-3. The data were split into two groups based on death or survival within 30 days. Variables selected based on clinical significance and availability through stepwise analysis were compared between groups. Three predictive models were constructed using R software: a conventional logistic regression model, the SAPS-II score prediction model, and an XGBoost algorithm model. The performances of the three models were tested and compared using the area under the receiver operating characteristic curve (AUC) and average precision through precision-recall curves. Finally, a clinical impact curve were used to validate the model.
 
-This study reinforces the potential of machine learning approaches in clinical settings, suggesting that the XGBoost model could assist clinicians in making informed decisions and tailoring precise treatments for sepsis patients.
+**Results**: A total of 4,555 sepsis-3 patients were included in the study, among whom 1,274 patients died and 3,281 survived within 30 days. According to the results of the AUCs—0.7513 for the logistic regression model, 0.7561 for the random forest model, and 0.7832 for the XGBoost model—and average precision, the XGBoost model performed best. The clinical impact curve verified that the XGBoost model possesses predictive value.
+
+**Conclusions**: A more significant predictive model can be built using the machine learning technique XGBoost. This XGBoost model may prove clinically useful and assist clinicians in tailoring precise management and therapy for patients with sepsis-3.
 
 ## Introduction
 
@@ -86,12 +91,8 @@ The primary code used in this project can be found in the directory `FILES > Cod
 
 Similar to the source paper, we used the Medical Information Mart for Intensive Care III database version 1.4 ([MIMIC III v1.4](https://doi.org/10.1038/sdata.2016.35)) for the study. MIMIC-III, a publicly available single-center critical care database which was approved by the Institutional Review Boards of Beth Israel Deaconess Medical Center (BIDMC, Boston, MA, USA) and the Massachusetts Institute of Technology (MIT, Cambridge, MA, USA), includes information on 46,520 patients who were admitted to various ICUs of BIDMC in Boston, Massachusetts from 2001 to 2012. The data was accessed via the Google BigQuery cloud platform and subsequently extracted and processed using SQL and Python. Additionally, the models were developed and evaluated in Python. This approach contrasts with the target paper, which primarily utilized R for these tasks.
 
-### XGBoost
 
-From the [XGBoost documentation](https://xgboost.readthedocs.io/en/stable/),  XGBoost is an optimized distributed gradient boosting library designed to be highly efficient, flexible and portable. It implements machine learning algorithms under the [Gradient Boosting](https://en.wikipedia.org/wiki/Gradient_boosting) framework. XGBoost provides a parallel tree boosting (also known as GBDT, GBM) that solve many data science problems in a fast and accurate way. The same code runs on major distributed environment (Hadoop, SGE, MPI) and can solve problems beyond billions of examples.
-
-
-## Data Extraction
+### Data Extraction
 
 We first extracted the given admission and patient data of all patients who were diagnosed with Sepsis. After this, we extracted the related baseline, vital, and laboratory data related to each sepsis patient. All variables were loaded into their own dataframe and eventually all dataframes were merged onto the patient list which was initially extracted. After this, the data transformation steps included handling inconsistencies, missing values, outliers, and categorical feature encoding. Finally, the 30 day mortality column is defined.
 
@@ -194,9 +195,9 @@ ORDER BY C.SUBJECT_ID ASC
 ```
 A query was written to extract each feature listed in the feature table, and then the results were merged on the sepsis patient table on the `SUBJECT_ID`. 
 
-## Data Preprocessing
+### Data Preprocessing
 
-### Defining Outcome Variable: 30-Day Mortality
+#### Defining Outcome Variable: 30-Day Mortality
 The sepsis patients were divided into two groups based on their 30 day mortality:
 1. `MORTALITY = 0`: Died within 30 days
 2. `MORTALITY = 1`: Survived within 30 days
@@ -213,7 +214,7 @@ patient_df['MORTALITY'] = patient_df['DIFF_DAYS'].apply(lambda x: 0 if x>30 else
 The statistics related to this will be provided in the exploratory data analysis section of this paper. 
 
 
-### Categorical Feature Encoding
+#### Categorical Feature Encoding
 
 The following categorical features were used in the model: Sex, Ethnicity, and Admission Type. All features were encoded into binary variables. Originally, 36 unique ethnicities were reported, and because of this high cardinality, the following grouping was used: 
 
@@ -244,7 +245,7 @@ After the ethnicity grouping was completed, the following results were observed:
 | NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER       | 2     |
 
 
-### Handling `NULL` Values
+#### Handling `NULL` Values
 After extracting all data and merging onto one DataFrame, a report of the `null` values was ran:
 
 | FEATURE                                                    | NULL COUNT | NULL PERCENTAGE |
@@ -292,7 +293,7 @@ After extracting all data and merging onto one DataFrame, a report of the `null`
 
 Mean value imputation was used to fill all `null` values. 
 
-### Handling Outliers
+#### Handling Outliers
 
 The outliers were handled using [winsorization](https://www.sciencedirect.com/science/article/abs/pii/B9780123848642000287). Instead of deleting outliers, and thereby losing degrees of freedom, Charles P. Winsor devised the strategy of replacing extreme data by duplicating values of less extreme data in the sample. Winsor’s approach was to replace an outlier with the next datum closer to the mean.  
 
@@ -350,18 +351,18 @@ def preprocess_outliers(df, threshold=3):
 | POTASSIUM_MIN_VAL   | 3.196617704 | 3.179681691| -0.5298104002      | 67           | 168          | 235          | 4.54            |
 | SODIUM_MIN_VAL      | 131.402861  | 131.5164675| 0.08645664798      | 208          | 63           | 271          | 5.24            |
 
+## Results
 
-## Exploratory Data Analysis
+### Exploratory Data Analysis
 
-This section includes the exploratory data analysis
 
-### Patient Cohort
+#### Patient Cohort
 
 After all filtering, our final cohort contains 1274 patients who died within 30 days and 3281 patients who survived within 30 days. 
 
 ![Patient Cohort Image](Report%20Figures/Patient%20Selection%20Figure.png)
 
-### Feature Statistics
+#### Feature Statistics
 
 Below is a table of the numerical baseline characteristics, vital signs, laboratory parameters and statistic results of mimic-III patients with sepsis. The table highlights several significant differences in baseline characteristics, vital signs, and laboratory parameters between sepsis patients who survived and those who did not within 30 days. Key predictors of mortality include older age, longer hospital and ICU stays, higher systolic and mean arterial pressures, lower heart rates, elevated BUN, lactate, anion gap, INR, and creatinine levels, as well as significant coagulation abnormalities indicated by platelet counts.
 
@@ -418,10 +419,12 @@ For the categorical features, a chi-squared test was applied and the following r
 The chi-squared analysis reveals that ethnicity and admission type are is significantly associated with 30-day mortality in sepsis patients, while gender is not.
 
 
-## Model Results
+
+
+### Predictive Models
 The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder. The code related to model development can be found in the file `650Models.ipynb`. This notebook utilizes many custom functions defined in the library file `dragonFunctions.py`.
 
-### Logistic Regression
+#### Logistic Regression
 
 
 ![LR_ROC](Report%20Figures/Plots/ROC_Curve_Logistic%20Regression.png)
@@ -457,7 +460,7 @@ The data was standardized using `StandardScaler()`. The coefficient/feature impo
 | **Weighted Avg** | 0.73   | 0.76   | 0.72     | 911     |
 
 
-### Random Forest
+#### Random Forest
 ![RF_ROC](Report%20Figures/Plots/ROC_Curve_Random%20Forest.png)
 Feature Importance Table:
 | Feature                                             | Importance          |
@@ -489,7 +492,9 @@ Feature Importance Table:
 | **Macro Avg** | 0.75      | 0.62   | 0.63     | 911     |
 | **Weighted Avg** | 0.76   | 0.77   | 0.73     | 911     |
 
-### XGBoost
+#### XGBoost
+
+From the [XGBoost documentation](https://xgboost.readthedocs.io/en/stable/),  XGBoost is an optimized distributed gradient boosting library designed to be highly efficient, flexible and portable. It implements machine learning algorithms under the [Gradient Boosting](https://en.wikipedia.org/wiki/Gradient_boosting) framework. XGBoost provides a parallel tree boosting (also known as GBDT, GBM) that solve many data science problems in a fast and accurate way. The same code runs on major distributed environment (Hadoop, SGE, MPI) and can solve problems beyond billions of examples.
 
 Through `GridSearchCV()`, the best following XGBoost parameters were chosen: 
 ```
@@ -532,11 +537,17 @@ Plotting the Average Precision and Receiver Operating Characteristic curves for 
 
 XGBoost attains the highest values for both AUC and AP, and is therefore the most optimal model given the dataset. 
 
+![CIC_XGB](Report%20Figures/Plots/CIC_XGB.png)
+Clinical impact curve (CIC) of XGboost model. The red curve (number of high-risk individuals) indicates the number of people who are classified as positive (high risk) by the model at each threshold probability; the blue curve (number of high-risk individuals with outcome) is the number of true positives at each threshold probability. The Clinical Impact Curve demonstrates that the model has clinical utility by maintaining a significant gap between the true positives (blue curve) and the high-risk cases (red curve), indicating effective identification of true positives while minimizing false positives. The blue curve remains high across clinically relevant threshold probabilities (0.2–0.6), capturing a substantial number of true positive cases, which is critical in medical applications. Additionally, the narrow confidence intervals for both curves suggest the model’s predictions are consistent and reliable, further supporting its practical applicability. Overall, the model effectively balances sensitivity and specificity, making it suitable for clinical decision-making.
+
+
 #### Selected Features
 Amongst all models, the baseline features of AGE and LOS (Length of Stay) were significant features. In terms of the vitals and laboratory signs, OXYGEN_SAT_MEAN stands out as the most important vital sign, consistently appearing as a top predictor. Other vital signs and lab values such as BUN levels, POTASSIUM_MIN_VAL, INR_MIN_VAL, CREATININE_MIN_VAL, TEMP_MIN_C, MAP_MEAN, and WEIGHT_MEAN are also significant in multiple models, reinforcing their relevance in predicting patient outcomes.
 
 
-## Discussion
+## Conclusion
+
+### Replication of Selected Paper
 Our developed models were unable to achieve the same Area Under the Curve (AUC) scores as those reported in the replicated paper. We have identified the key factors which may have contributed to this discrepancy:
 
 - **Different Definitions of 30-Day Mortality**: We used Admission Time and Date of Death to calculuate the `MORTALITY` Boolean, but the paper may have used a different definition, such as using Length of Stay. The paper did not state how this was defined.
@@ -549,10 +560,25 @@ For instance, when attempting to extract urine output data using LAB ITEMS 51108
 
 Despite these limitations, our XGBoost model still outperformed traditional models, aligning with the primary objective of the replicated paper.
 
+### Key Findings and Healthcare Implications
+
+Our replication demonstrated that the XGBoost machine learning model outperforms traditional Logistic Regression and Random Forest models in predicting 30-day mortality among sepsis-3 patients using the MIMIC-III database. Specifically, XGBoost achieved the highest Area Under the Receiver Operating Characteristic Curve (AUC) of 0.7832 and the strongest Average Precision (AP) score, indicating superior discrimination and precision-recall performance. Key predictors identified across models included Length of Stay (LOS), Age at Admission, Oxygen Saturation (OXYGEN_SAT_MEAN), and various biochemical markers such as Blood Urea Nitrogen (BUN) and Lactate levels. Additionally, the clinical utility of the model was verified with the clinical impact curve. 
+
+The healthcare implications of these findings are significant. Implementing the XGBoost model in clinical settings can improve risk stratification, enabling healthcare providers to identify high-risk sepsis patients more accurately and allocate resources more effectively. This leads to better patient triage and timely interventions, potentially reducing mortality rates and enhancing patient outcomes. Moreover, the identification of critical predictors highlights areas for targeted clinical monitoring and intervention, addressing underlying factors that contribute to sepsis mortality. By integrating such advanced predictive models into Clinical Decision Support Systems (CDSS), hospitals can enhance decision-making processes, ensure equitable care across diverse patient populations, and ultimately contribute to more efficient and effective sepsis management protocols.
+
 
 ## Conclusion
 In conclusion, the XGBoost model outperforms conventional logistic regression and random forest models. This replication confirms that the XGBoost model has the potential to be clinically beneficial, aiding healthcare professionals in providing precise management and treatment for patients with sepsis, which is crucial for enhancing the likelihood of patient survival.
 
+## Lessons Learned
+
+As a team, we collectively leaned the following lessons:
+
+- **Database Initialization**: We learned to initialize and manage databases both locally and on the cloud. We learned this through following the great MIMIC-III documentation and also learned about the trade offs between each choice. We believe working with the cloud instance was the best route given the project requirements. 
+- **Secure Data Connections**: Established secure connections to cloud instances and imported data directly into notebooks. We adhered to best practices for securely transferring data, initializing application default credentials, and configuring our workflows to prevent exposure of sensitive information, such as keys, secrets, or passwords.
+- **Reproducibility in Research**: As a group, we emphasized the importance of verifying the findings of the selected research papers. By working together to replicate methodologies as accurately as possible, we highlighted the need for open-sourced code to improve transparency, visibility, and peer review in rigorous medical research.
+- **Project Management and Accountability**: We developed effective strategies for managing tasks, assigning responsibilities, and ensuring accountability given our working schedules. Our collaboration strengthened our ability to track progress and meet project objectives efficiently.
+- **Learning New Tools**: Each of us explored the evaluation metrics used in the target paper, such as average precision through precision-recall curves and clinical impact curves.
 
 ## References
 - Hou, N., Li, M., He, L. et al. Predicting 30-days mortality for MIMIC-III patients with sepsis-3: a machine learning approach using XGboost. J Transl Med 18, 462 (2020). https://doi.org/10.1186/s12967-020-02620-5
