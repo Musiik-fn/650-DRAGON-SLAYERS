@@ -42,6 +42,7 @@ Table of Contents:
     - [Replication of Selected Paper](#replication-of-selected-paper)
     - [Key Findings and Healthcare Implications](#key-findings-and-healthcare-implications)
   - [Lessons Learned](#lessons-learned)
+  - [Appendix](#appendix)
   - [References](#references)
 
 ---
@@ -511,6 +512,14 @@ As a team, we collectively leaned the following lessons:
 - **Reproducibility in Research**: As a group, we emphasized the importance of verifying the findings of the selected research papers. By working together to replicate methodologies as accurately as possible, we highlighted the need for open-sourced code to improve transparency, visibility, and peer review in rigorous medical research.
 - **Project Management and Accountability**: We developed effective strategies for managing tasks, assigning responsibilities, and ensuring accountability given our working schedules. Our collaboration strengthened our ability to track progress and meet project objectives efficiently.
 - **Learning New Tools**: Each of us explored the evaluation metrics used in the target paper, such as average precision through precision-recall curves and clinical impact curves.
+
+## Appendix
+
+- [SQL Statements](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/Data_Extraction.sql)
+- [Data Extraction Notebook](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/650DataExtract.ipynb)
+- [Exploratory Data Analysis Notebook](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/650EDA.ipynb)
+- [Models Notebook](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/650Models.ipynb)
+- [Function Library](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/dragonFunctions.py)
 
 ## References
 - Hou, N., Li, M., He, L. et al. Predicting 30-days mortality for MIMIC-III patients with sepsis-3: a machine learning approach using XGboost. J Transl Med 18, 462 (2020). https://doi.org/10.1186/s12967-020-02620-5
