@@ -53,9 +53,10 @@ Table of Contents:
 
 **Methods**: Using the MIMIC-III v1.4 database, we identified patients with sepsis-3. The data were split into two groups based on death or survival within 30 days. Variables selected based on clinical significance and availability through stepwise analysis were compared between groups. Three predictive models were constructed using R software: a conventional logistic regression model, the SAPS-II score prediction model, and an XGBoost algorithm model. The performances of the three models were tested and compared using the area under the receiver operating characteristic curve (AUC) and average precision through precision-recall curves. Finally, a clinical impact curve were used to validate the model.
 
-**Results**: A total of 4,555 sepsis-3 patients were included in the study, among whom 1,274 patients died and 3,281 survived within 30 days. According to the results of the AUCs—0.7513 for the logistic regression model, 0.7561 for the random forest model, and 0.7832 for the XGBoost model—and average precision, the XGBoost model performed best. The clinical impact curve verified that the XGBoost model possesses predictive value.
+**Results**: A total of 4,555 sepsis-3 patients were included in the study, among whom 1,274 patients died and 3,281 survived within 30 days. According to the results of the AUCs—0.75 (95 % CI: 0.72-0.78) for the logistic regression model, 0.77 (95 % CI: 0.73-0.80) for the random forest model, and 0.79 (95 % CI: 0.75-0.82) for the XGBoost model—and average precision, the XGBoost model performed best. The clinical impact curve and the net benefit curves verified that the XGBoost model possesses clinical utility.
 
-**Conclusions**: A more significant predictive model can be built using the machine learning technique XGBoost. This XGBoost model may prove clinically useful and assist clinicians in tailoring precise management and therapy for patients with sepsis-3.
+
+**Conclusions**: A more significant predictive model can be built using the machine learning technique XGBoost. This XGBoost model may prove clinically useful and assist clinicians in tailoring management and triage for patients with sepsis-3.
 
 ## Introduction
 
@@ -462,7 +463,7 @@ Feature Gain Table:
 ![XGBoost Confusion Matrix](Report%20Figures/Plots/Confusion_Matrix_XGBoost_Cross_Validated_Training.png)
 
 ![CIC_XGB](Report%20Figures/Plots/CIC_XGB.png)
-Clinical impact curve (CIC) of XGboost model. The red curve (number of high-risk individuals) indicates the number of people who are classified as positive (high risk) by the model at each threshold probability; the blue curve (number of high-risk individuals with outcome) is the number of true positives at each threshold probability. The Clinical Impact Curve demonstrates that the model has clinical utility by maintaining a significant gap between the true positives (blue curve) and the high-risk cases (red curve), indicating effective identification of true positives while minimizing false positives. The blue curve remains high across clinically relevant threshold probabilities (0.2–0.6), capturing a substantial number of true positive cases, which is critical in medical applications. Additionally, the narrow confidence intervals for both curves suggest the model’s predictions are consistent and reliable, further supporting its practical applicability. Overall, the model effectively balances sensitivity and specificity, making it suitable for clinical decision-making.
+*Clinical impact curve (CIC) of XGboost model. The red curve (number of high-risk individuals) indicates the number of people who are classified as positive (high risk) by the model at each threshold probability; the blue curve (number of high-risk individuals with outcome) is the number of true positives at each threshold probability. The Clinical Impact Curve demonstrates that the model has clinical utility by maintaining a significant gap between the true positives (blue curve) and the high-risk cases (red curve), indicating effective identification of true positives while minimizing false positives. The blue curve remains high across clinically relevant threshold probabilities (0.2–0.6), capturing a substantial number of true positive cases, which is critical in medical applications. Additionally, the narrow confidence intervals for both curves suggest the model’s predictions are consistent and reliable, further supporting its practical applicability. Overall, the model effectively balances sensitivity and specificity, making it suitable for clinical decision-making.*
 
 ### Model Comparison
 
@@ -471,10 +472,12 @@ Plotting the Average Precision and Receiver Operating Characteristic curves for 
 ![AP Curve Comparison](Report%20Figures/Plots/Combined_ROC_Curves.png)
 
 ![ROC Curve Comparison](Report%20Figures/Plots/Combined_Precision_Recall_Curves.png)
-XGBoost attains the highest values for both AUC and AP, and is therefore the most optimal model with respect to this metric.
+
+*XGBoost attains the highest values for both AUC and AP, and is therefore the most optimal model with respect to this metric.*
 
 ![Net_Benefit](Report%20Figures/Plots/Combined_Net_Benefit.png)
-Decision curve analysis (DCA) of the three prediction models. The net benefit curves for the three prognostic models are shown. X-axis indicates the threshold probability for critical care outcome and Y-axis indicates the net benefit. Solid brown line = XGboost model, solid blue line = traditional logistic model, solid purple line = RF model. Although all models perform similarily by net beenfit, the preferred model is the XGboost model. The net benefit of XGboost was marginally larger over the range of the logistic model and random forest model.
+
+*Decision curve analysis (DCA) of the three prediction models. The net benefit curves for the three prognostic models are shown. X-axis indicates the threshold probability for critical care outcome and Y-axis indicates the net benefit. Solid brown line = XGboost model, solid blue line = traditional logistic model, solid purple line = RF model. Although all models perform similarily by net beenfit, the preferred model is the XGboost model. The net benefit of XGboost was marginally larger over the range of the logistic model and random forest model.*
 
 #### Selected Features
 Amongst all models, the baseline features of AGE and LOS (Length of Stay) were significant features. In terms of the vitals and laboratory signs, OXYGEN_SAT_MEAN stands out as the most important vital sign, consistently appearing as a top predictor. Other vital signs and lab values such as BUN levels, POTASSIUM_MIN_VAL, INR_MIN_VAL, CREATININE_MIN_VAL, TEMP_MIN_C, MAP_MEAN, and WEIGHT_MEAN are also significant in multiple models, reinforcing their relevance in predicting patient outcomes.
