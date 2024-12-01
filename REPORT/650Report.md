@@ -356,7 +356,7 @@ The chi-squared analysis reveals that ethnicity and admission type are significa
 
 
 ### Predictive Models
-The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder. The code related to model development can be found in the file [650Models.ipynb](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/650Models.ipynb). This notebook utilizes many custom functions defined in the library file [dragonFunctions.py](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/dragonFunctions.py).
+The data was standardized using `StandardScaler()`. The coefficient/feature importance values for each model are saved in the `Data` folder. The code related to model development can be found in the file [650Models.ipynb](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/650Models.ipynb). For automation, this notebook utilizes several functions defined in the library file [dragonFunctions.py](https://github.com/Musiik-fn/650-DRAGON-SLAYERS/blob/main/FILES/Code/dragonFunctions.py).
 
 #### Logistic Regression
 
@@ -461,6 +461,9 @@ Feature Gain Table:
 
 ![XGBoost Confusion Matrix](Report%20Figures/Plots/Confusion_Matrix_XGBoost_Cross_Validated_Training.png)
 
+![CIC_XGB](Report%20Figures/Plots/CIC_XGB.png)
+Clinical impact curve (CIC) of XGboost model. The red curve (number of high-risk individuals) indicates the number of people who are classified as positive (high risk) by the model at each threshold probability; the blue curve (number of high-risk individuals with outcome) is the number of true positives at each threshold probability. The Clinical Impact Curve demonstrates that the model has clinical utility by maintaining a significant gap between the true positives (blue curve) and the high-risk cases (red curve), indicating effective identification of true positives while minimizing false positives. The blue curve remains high across clinically relevant threshold probabilities (0.2–0.6), capturing a substantial number of true positive cases, which is critical in medical applications. Additionally, the narrow confidence intervals for both curves suggest the model’s predictions are consistent and reliable, further supporting its practical applicability. Overall, the model effectively balances sensitivity and specificity, making it suitable for clinical decision-making.
+
 ### Model Comparison
 
 Plotting the Average Precision and Receiver Operating Characteristic curves for all models onto a single graph, we have the following results:
@@ -468,12 +471,10 @@ Plotting the Average Precision and Receiver Operating Characteristic curves for 
 ![AP Curve Comparison](Report%20Figures/Plots/Combined_ROC_Curves.png)
 
 ![ROC Curve Comparison](Report%20Figures/Plots/Combined_Precision_Recall_Curves.png)
+XGBoost attains the highest values for both AUC and AP, and is therefore the most optimal model with respect to this metric.
 
-XGBoost attains the highest values for both AUC and AP, and is therefore the most optimal model given the dataset. 
-
-![CIC_XGB](Report%20Figures/Plots/CIC_XGB.png)
-Clinical impact curve (CIC) of XGboost model. The red curve (number of high-risk individuals) indicates the number of people who are classified as positive (high risk) by the model at each threshold probability; the blue curve (number of high-risk individuals with outcome) is the number of true positives at each threshold probability. The Clinical Impact Curve demonstrates that the model has clinical utility by maintaining a significant gap between the true positives (blue curve) and the high-risk cases (red curve), indicating effective identification of true positives while minimizing false positives. The blue curve remains high across clinically relevant threshold probabilities (0.2–0.6), capturing a substantial number of true positive cases, which is critical in medical applications. Additionally, the narrow confidence intervals for both curves suggest the model’s predictions are consistent and reliable, further supporting its practical applicability. Overall, the model effectively balances sensitivity and specificity, making it suitable for clinical decision-making.
-
+![Net_Benefit](Report%20Figures/Plots/Combined_Net_Benefit.png)
+Decision curve analysis (DCA) of the three prediction models. The net benefit curves for the three prognostic models are shown. X-axis indicates the threshold probability for critical care outcome and Y-axis indicates the net benefit. Solid brown line = XGboost model, solid blue line = traditional logistic model, solid purple line = RF model. Although all models perform similarily by net beenfit, the preferred model is the XGboost model. The net benefit of XGboost was marginally larger over the range of the logistic model and random forest model.
 
 #### Selected Features
 Amongst all models, the baseline features of AGE and LOS (Length of Stay) were significant features. In terms of the vitals and laboratory signs, OXYGEN_SAT_MEAN stands out as the most important vital sign, consistently appearing as a top predictor. Other vital signs and lab values such as BUN levels, POTASSIUM_MIN_VAL, INR_MIN_VAL, CREATININE_MIN_VAL, TEMP_MIN_C, MAP_MEAN, and WEIGHT_MEAN are also significant in multiple models, reinforcing their relevance in predicting patient outcomes.

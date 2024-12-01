@@ -15,6 +15,7 @@ from pathlib import Path
 from scipy import stats  # Added import for scipy.stats
 from typing import List, Tuple
 from sklearn.base import BaseEstimator
+from sklearn.calibration import CalibratedClassifierCV
 
 def mean_confidence_interval(data, confidence=0.95):
     """
@@ -267,6 +268,25 @@ def save_plot(plot_path):
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print(f"Plot saved successfully at {plot_path.resolve()}")
   
+def calibrate_model(model, X_train, y_train, method='sigmoid', cv=5):
+    """
+    Calibrates a model using CalibratedClassifierCV.
+    
+    Parameters:
+    - model: The base model to calibrate.
+    - X_train: Training features.
+    - y_train: Training labels.
+    - method: 'isotonic' or 'sigmoid' (Platt scaling).
+    - cv: Number of cross-validation folds.
+    
+    Returns:
+    - calibrated_model: The calibrated model.
+    """
+    calibrated = CalibratedClassifierCV(base_estimator=model, method=method, cv=cv)
+    calibrated.fit(X_train, y_train)
+    print(f'Model calibrated using {method} method.')
+    return calibrated
+
 def evaluate_model(
     model,
     model_name,
